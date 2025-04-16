@@ -96,9 +96,9 @@ export default async function HomePage() {
           }),
         }}
       />
-      <div className="container mx-auto px-4 py-8 space-y-10">
+      <div className="container mx-auto px-4 py-6 sm:py-8 space-y-8 sm:space-y-10">
         {/* Hero section */}
-        <section className="relative rounded-xl overflow-hidden">
+        <section className="relative overflow-hidden">
           <NovelSlider
             sliderData={
               (await fetchNovels({ sort: "updatedAt", limit: 10 })).novels
@@ -112,25 +112,28 @@ export default async function HomePage() {
             title: "Top 10 Novels",
             href: "/search?sort=views",
             novels: top10Novels.results[0].truyens,
-            columns: "md:grid-cols-4 lg:grid-cols-5",
+            columns: "sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
           },
           {
             id: "trending-day-novels",
             title: "Trending Today",
             href: "/search?sort=views",
             novels: top10Novels.results[0].truyens,
+            columns: "sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
           },
           {
             id: "trending-week-novels",
             title: "Weekly Favorites",
             href: "/search?sort=views",
             novels: top10Novels.results[2].truyens,
+            columns: "sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
           },
           {
             id: "trending-month-novels",
             title: "Monthly Hits",
             href: "/search?sort=views",
             novels: top10Novels.results[1].truyens,
+            columns: "sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
           },
         ].map(
           ({
@@ -138,11 +141,11 @@ export default async function HomePage() {
             title,
             href,
             novels,
-            columns = "md:grid-cols-3 lg:grid-cols-6",
+            columns = "sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
           }) => (
             <section key={`${id}`}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">{title}</h2>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
                 <Link
                   href={href}
                   className="flex items-center text-sm text-primary hover:underline font-medium"
@@ -150,7 +153,7 @@ export default async function HomePage() {
                   View all <FaChevronRight className="ml-1 h-3 w-3" />
                 </Link>
               </div>
-              <div className={`grid grid-cols-2 ${columns} gap-4`}>
+              <div className={`grid grid-cols-2 ${columns} gap-3 sm:gap-4`}>
                 {novels.map((novel, idx) => (
                   <NovelCard key={`${novel._id}-${idx}`} novel={novel} />
                 ))}

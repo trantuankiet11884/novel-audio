@@ -39,7 +39,7 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
         effect={"coverflow"}
         grabCursor={true}
         centeredSlides={true}
-        slidesPerView={3}
+        slidesPerView={"auto"}
         initialSlide={1}
         coverflowEffect={{
           rotate: 0,
@@ -60,34 +60,50 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
           delay: 3000,
           disableOnInteraction: false,
         }}
+        breakpoints={{
+          320: {
+            slidesPerView: 1.2,
+            spaceBetween: 10,
+            effect: "slide",
+          },
+          640: {
+            slidesPerView: 2,
+            spaceBetween: 20,
+          },
+          1024: {
+            slidesPerView: 3,
+            spaceBetween: 30,
+            effect: "coverflow",
+          },
+        }}
         modules={[EffectCoverflow, Pagination, Navigation, Autoplay]}
         className="w-full relative"
       >
         {sliderData.map((novel) => (
-          <SwiperSlide key={novel._id}>
+          <SwiperSlide key={novel._id} className="w-full sm:w-auto">
             {({ isActive }) => (
               <div
                 className={`transition-all duration-300 ${
-                  isActive ? "scale-100" : "scale-90"
+                  isActive ? "scale-100" : "scale-95 opacity-80"
                 }`}
               >
                 <Link
                   href={`/novel/${novel.slug}`}
                   className="block cursor-pointer"
                 >
-                  <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
+                  <div className="relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden shadow-lg">
                     <Image
                       src={novel.cover || novel.thumb}
                       alt={novel.title || novel.name}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover w-full h-full"
                     />
-                    <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
-                      <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-6">
+                      <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white line-clamp-2">
                         {novel.title || novel.name}
                       </h3>
-                      <p className="text-white/80 text-sm md:text-base line-clamp-2 mt-1 md:mt-2">
+                      <p className="text-white/80 text-xs sm:text-sm md:text-base line-clamp-2 mt-1 md:mt-2">
                         {novel.description}
                       </p>
                     </div>
@@ -98,8 +114,8 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
           </SwiperSlide>
         ))}
 
-        <div className="swiper-button-prev !text-white !bg-black/30 !w-10 !h-10 !rounded-full grid place-items-center !-left-1 md:!left-4 !after:text-lg"></div>
-        <div className="swiper-button-next !text-white !bg-black/30 !w-10 !h-10 !rounded-full grid place-items-center !-right-1 md:!right-4 !after:text-lg"></div>
+        <div className="swiper-button-prev !hidden sm:!flex !text-white !bg-black/30 !w-8 !h-8 sm:!w-10 sm:!h-10 !rounded-full grid place-items-center !-left-1 md:!left-4 !after:text-xs sm:!after:text-lg"></div>
+        <div className="swiper-button-next !hidden sm:!flex !text-white !bg-black/30 !w-8 !h-8 sm:!w-10 sm:!h-10 !rounded-full grid place-items-center !-right-1 md:!right-4 !after:text-xs sm:!after:text-lg"></div>
       </Swiper>
     </div>
   );
