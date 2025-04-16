@@ -1,6 +1,7 @@
 import { NovelCard } from "@/components/audio/novel-card";
 import { NovelBookmarkButton } from "@/components/novel/bookmark-button";
 import NovelPageClient from "@/components/novel/novel-client";
+import AudioPlayerSkeleton from "@/components/audio/audio-player-skeletion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

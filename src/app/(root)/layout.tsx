@@ -3,10 +3,11 @@ import { Header } from "@/components/layout/header";
 import { AuthProvider } from "@/contexts/auth";
 import config from "@/config/data";
 import Script from "next/script";
+import { BackToTop } from "@/components/back-to-top";
 
 const ClientLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="">
+    <div className="flex min-h-screen flex-col">
       <Script id="schema-organization" type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -46,8 +47,9 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
 
       <AuthProvider>
         <Header />
-        {children}
+        <main className="flex-1">{children}</main>
         <Footer />
+        <BackToTop />
       </AuthProvider>
     </div>
   );

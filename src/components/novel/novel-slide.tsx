@@ -1,9 +1,8 @@
 "use client";
-import { useState } from "react";
-
+import { useState, useEffect, useRef, memo } from "react";
 import { Novel } from "@/lib/apis/api";
 import Link from "next/link";
-import { useEffect } from "react";
+import Image from "next/image";
 import "swiper/css";
 import "swiper/css/effect-coverflow";
 import "swiper/css/navigation";
@@ -14,24 +13,31 @@ import {
   Pagination,
 } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-import Image from "next/image";
 import { fallbackImage } from "@/utils/constants";
 
 type NovelSliderProps = {
   sliderData: Novel[];
 };
 
-export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const NovelSlider = memo(function NovelSlider({
+  sliderData,
+}: NovelSliderProps) {
+  const [isClient, setIsClient] = useState(false);
+  const swiperRef = useRef(null);
 
+  // Chỉ load swiper ở client side để tránh hydration mismatch
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === sliderData.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000);
-    return () => clearInterval(interval);
+    setIsClient(true);
   }, []);
+
+  if (!isClient) {
+    // Hiển thị placeholder ở server-side
+    return (
+      <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-100 rounded-xl flex items-center justify-center">
+        <div className="w-3/4 h-full bg-gray-200 rounded-xl animate-pulse"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto">
@@ -59,6 +65,7 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
         autoplay={{
           delay: 3000,
           disableOnInteraction: false,
+          pauseOnMouseEnter: true,
         }}
         breakpoints={{
           320: {
@@ -78,8 +85,9 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
         }}
         modules={[EffectCoverflow, Pagination, Navigation, Autoplay]}
         className="w-full relative"
+        ref={swiperRef}
       >
-        {sliderData.map((novel) => (
+        {sliderData.slice(0, 5).map((novel, index) => (
           <SwiperSlide key={novel._id} className="w-full sm:w-auto">
             {({ isActive }) => (
               <div
@@ -93,11 +101,13 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
                 >
                   <div className="relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden shadow-lg">
                     <Image
-                      src={novel.cover || novel.thumb}
+                      src={novel.cover || novel.thumb || fallbackImage}
                       alt={novel.title || novel.name}
                       fill
                       sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover w-full h-full"
+                      priority={index < 2} // Chỉ ưu tiên tải trước 2 ảnh đầu tiên
+                      loading={index < 2 ? "eager" : "lazy"}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-6">
                       <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white line-clamp-2">
@@ -119,4 +129,6 @@ export const NovelSlider = ({ sliderData }: NovelSliderProps) => {
       </Swiper>
     </div>
   );
-};
+});
+
+export default NovelSlider;

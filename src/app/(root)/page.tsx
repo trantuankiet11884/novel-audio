@@ -1,6 +1,6 @@
 import { NovelCard } from "@/components/audio/novel-card";
 import UpdatedNovels from "@/components/home/updated-novels";
-import { NovelSlider } from "@/components/novel/novel-slide";
+import NovelSlider from "@/components/novel/novel-slide";
 import { fetchNovels, fetchTop10Novels } from "@/lib/apis/api";
 import Link from "next/link";
 import { FaChevronRight } from "react-icons/fa";

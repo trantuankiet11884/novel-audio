@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AudioPlayer from "@/components/audio/audio-player";
+import AudioPlayerSkeleton from "@/components/audio/audio-player-skeletion";
 import ChapterList from "@/components/novel/chapter-list";
 import { Chapter, Novel } from "@/lib/apis/api";
 
@@ -68,14 +69,16 @@ export default function NovelPageClient({
             </h2>
           </div>
           <div className="hidden md:block p-6">
-            <AudioPlayer
-              novels={novels}
-              novelId={novelId}
-              chapterIndex={currentChapterIndex}
-              totalChapters={chapters.length}
-              novelSlug={novelSlug}
-              onChapterChange={handleChapterChange}
-            />
+            <Suspense fallback={<AudioPlayerSkeleton />}>
+              <AudioPlayer
+                novels={novels}
+                novelId={novelId}
+                chapterIndex={currentChapterIndex}
+                totalChapters={chapters.length}
+                novelSlug={novelSlug}
+                onChapterChange={handleChapterChange}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -105,15 +108,17 @@ export default function NovelPageClient({
       {/* Fixed Mobile Audio Player */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 shadow-lg">
         <div className="container mx-auto">
-          <AudioPlayer
-            novelId={novelId}
-            chapterIndex={currentChapterIndex}
-            totalChapters={chapters.length}
-            novelSlug={novelSlug}
-            onChapterChange={handleChapterChange}
-            isMobileView={true}
-            novels={novels}
-          />
+          <Suspense fallback={<AudioPlayerSkeleton isMobileView={true} />}>
+            <AudioPlayer
+              novelId={novelId}
+              chapterIndex={currentChapterIndex}
+              totalChapters={chapters.length}
+              novelSlug={novelSlug}
+              onChapterChange={handleChapterChange}
+              isMobileView={true}
+              novels={novels}
+            />
+          </Suspense>
         </div>
       </div>
 

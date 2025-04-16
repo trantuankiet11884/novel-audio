@@ -140,52 +140,67 @@ export default function ChapterList({
     }
   }, [currentChapterIndex, chapters.length]);
 
+  const renderPageInfo = () => {
+    return (
+      <div className="text-sm text-center text-muted-foreground">
+        Page {currentPage} of {totalPages}
+      </div>
+    );
+  };
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
     return (
-      <div className="flex justify-between items-center mt-4">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1 || isLoading}
-        >
-          Previous
-        </Button>
+      <div className="flex flex-col gap-3 mt-4">
+        <div className="flex items-center justify-center gap-2">
+          <Select
+            value={currentPage.toString()}
+            onValueChange={(value) => setCurrentPage(parseInt(value, 10))}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder={currentPage} />
+            </SelectTrigger>
+            <SelectContent className="max-h-[200px]">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <SelectItem key={i + 1} value={(i + 1).toString()}>
+                  {i + 1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {renderPageInfo()}
+        </div>
 
-        <Select
-          value={currentPage.toString()}
-          onValueChange={(value) => setCurrentPage(parseInt(value, 10))}
-        >
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder={currentPage} />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <SelectItem key={i + 1} value={(i + 1).toString()}>
-                {i + 1}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant="outline"
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={currentPage === totalPages || isLoading}
-        >
-          Next
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1 || isLoading}
+            className="flex-1"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages || isLoading}
+            className="flex-1"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     );
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-4">
-        <div className="relative flex-1">
+      {/* Search and sort options */}
+      <div className="space-y-3">
+        <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search chapters..."
@@ -196,30 +211,31 @@ export default function ChapterList({
         <Button
           variant="outline"
           onClick={toggleSortDirection}
-          className="flex items-center gap-1"
+          className="w-full flex items-center justify-center gap-1"
         >
-          Sort {sortDirection === "asc" ? "1 → Latest" : "Latest → 1"}
-          <ArrowUpDown className="h-4 w-4" />
+          Sort {sortDirection === "asc" ? "Oldest First" : "Latest First"}
+          <ArrowUpDown className="h-4 w-4 ml-1" />
         </Button>
       </div>
 
-      <div className="border rounded-md max-h-[600px] overflow-y-auto">
+      {/* Chapter table */}
+      <div className="border rounded-md max-h-[450px] overflow-y-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
-              <TableHead scope="col">Chapters</TableHead>
-              <TableHead scope="col" className="text-right">
-                Action
+              <TableHead className="w-full">Chapters</TableHead>
+              <TableHead className="w-10">
+                <span className="sr-only">Action</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center py-12">
+                <TableCell colSpan={2} className="text-center py-8">
                   <div className="flex justify-center items-center">
-                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span>Loading chapters...</span>
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <span>Loading...</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -240,24 +256,29 @@ export default function ChapterList({
                         : ""
                     }
                   >
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium py-2.5 pr-0">
                       <button
                         onClick={() => onChapterSelect(originalIndex)}
-                        className={`hover:underline text-left cursor-pointer ${
+                        className={`hover:underline text-left cursor-pointer line-clamp-2 ${
                           isCurrentChapter ? "font-bold text-primary" : ""
                         }`}
                       >
                         {chapter.title}
-                        {isCurrentChapter && " (Current)"}
+                        {isCurrentChapter && (
+                          <span className="ml-1 text-xs bg-primary/20 px-1.5 py-0.5 rounded">
+                            Current
+                          </span>
+                        )}
                       </button>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right py-2.5 pl-1">
                       <Button
                         variant={isCurrentChapter ? "default" : "ghost"}
                         size="sm"
                         onClick={() => onChapterSelect(originalIndex)}
+                        className="h-7 w-7 p-0"
                       >
-                        <Play className="h-4 w-4" />
+                        <Play className="h-3.5 w-3.5" />
                         <span className="sr-only">
                           Listen to {chapter.title}
                         </span>
