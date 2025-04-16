@@ -121,7 +121,7 @@ export function SearchResults() {
           <div className="h-8 w-64 bg-muted rounded animate-pulse" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 9 }).map((_, i) => (
             <NovelCardSkeleton key={i} />
           ))}
@@ -161,76 +161,80 @@ export function SearchResults() {
       {pagination.totalPages > 1 && (
         <div className="mt-8 flex flex-col gap-4 items-center">
           <Pagination>
-            <PaginationContent>
+            <PaginationContent className="flex flex-wrap justify-center gap-2">
               {pagination.hasPrev && (
                 <PaginationItem>
                   <button
                     onClick={() => handlePageChange(pagination.page - 1)}
-                    className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1"
+                    className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-3 sm:px-4 py-2 gap-1"
                   >
                     <FiArrowLeft className="h-4 w-4" />
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
                   </button>
                 </PaginationItem>
               )}
 
-              {Array.from(
-                { length: Math.min(pagination.totalPages, 5) },
-                (_, i) => {
-                  let pageNumber;
+              <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+                {Array.from(
+                  { length: Math.min(pagination.totalPages, 5) },
+                  (_, i) => {
+                    let pageNumber;
 
-                  if (pagination.totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (pagination.page <= 3) {
-                    pageNumber = i + 1;
-                  } else if (pagination.page >= pagination.totalPages - 2) {
-                    pageNumber = pagination.totalPages - 4 + i;
-                  } else {
-                    pageNumber = pagination.page - 2 + i;
+                    if (pagination.totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (pagination.page <= 3) {
+                      pageNumber = i + 1;
+                    } else if (pagination.page >= pagination.totalPages - 2) {
+                      pageNumber = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNumber = pagination.page - 2 + i;
+                    }
+
+                    return (
+                      <PaginationItem key={i}>
+                        <button
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 w-8 sm:h-10 sm:w-10
+                          ${
+                            pageNumber === pagination.page
+                              ? "bg-primary text-primary-foreground"
+                              : "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      </PaginationItem>
+                    );
                   }
-
-                  return (
-                    <PaginationItem key={i}>
-                      <button
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 w-10
-                        ${
-                          pageNumber === pagination.page
-                            ? "bg-primary text-primary-foreground"
-                            : "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        {pageNumber}
-                      </button>
-                    </PaginationItem>
-                  );
-                }
-              )}
-
-              {pagination.totalPages > 5 &&
-                pagination.page < pagination.totalPages - 2 && (
-                  <>
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <button
-                        onClick={() => handlePageChange(pagination.totalPages)}
-                        className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10"
-                      >
-                        {pagination.totalPages}
-                      </button>
-                    </PaginationItem>
-                  </>
                 )}
+
+                {pagination.totalPages > 5 &&
+                  pagination.page < pagination.totalPages - 2 && (
+                    <>
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <button
+                          onClick={() =>
+                            handlePageChange(pagination.totalPages)
+                          }
+                          className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8 sm:h-10 sm:w-10"
+                        >
+                          {pagination.totalPages}
+                        </button>
+                      </PaginationItem>
+                    </>
+                  )}
+              </div>
 
               {pagination.hasNext && (
                 <PaginationItem>
                   <button
                     onClick={() => handlePageChange(pagination.page + 1)}
-                    className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1"
+                    className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-3 sm:px-4 py-2 gap-1"
                   >
-                    Next
+                    <span className="hidden sm:inline">Next</span>
                     <FiArrowRight className="h-4 w-4" />
                   </button>
                 </PaginationItem>
@@ -238,7 +242,7 @@ export function SearchResults() {
             </PaginationContent>
           </Pagination>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
             <div className="text-sm text-muted-foreground">
               Page {pagination.page} of {pagination.totalPages}
             </div>

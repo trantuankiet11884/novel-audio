@@ -67,7 +67,7 @@ export default function NovelPageClient({
               <span className="mr-2">🎵</span> Audio Player
             </h2>
           </div>
-          <div className="p-6">
+          <div className="hidden md:blockp-6">
             <AudioPlayer
               novels={novels}
               novelId={novelId}
