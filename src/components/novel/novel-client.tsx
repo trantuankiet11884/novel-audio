@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AudioPlayer from "@/components/audio/audio-player";
 import ChapterList from "@/components/novel/chapter-list";
-import { Chapter } from "@/lib/apis/api";
+import { Chapter, Novel } from "@/lib/apis/api";
 
 interface NovelPageClientProps {
   novelId: string;
   novelSlug: string;
   chapters: Chapter[];
   initialChapterIndex: number;
+  novels: Novel;
 }
 
 export default function NovelPageClient({
@@ -18,6 +19,7 @@ export default function NovelPageClient({
   novelSlug,
   chapters,
   initialChapterIndex,
+  novels,
 }: NovelPageClientProps) {
   const [currentChapterIndex, setCurrentChapterIndex] =
     useState(initialChapterIndex);
@@ -67,6 +69,7 @@ export default function NovelPageClient({
           </div>
           <div className="p-6">
             <AudioPlayer
+              novels={novels}
               novelId={novelId}
               chapterIndex={currentChapterIndex}
               totalChapters={chapters.length}
@@ -100,7 +103,7 @@ export default function NovelPageClient({
       </div>
 
       {/* Fixed Mobile Audio Player */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 p-4 shadow-lg">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 shadow-lg">
         <div className="container mx-auto">
           <AudioPlayer
             novelId={novelId}
@@ -109,12 +112,13 @@ export default function NovelPageClient({
             novelSlug={novelSlug}
             onChapterChange={handleChapterChange}
             isMobileView={true}
+            novels={novels}
           />
         </div>
       </div>
 
       {/* Add extra padding for mobile */}
-      <div className="lg:hidden h-32"></div>
+      <div className="lg:hidden h-24"></div>
     </div>
   );
 }

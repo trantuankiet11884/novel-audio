@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -27,6 +27,10 @@ import {
   splitText,
 } from "@/lib/audio";
 import AudioPlayerSkeleton from "./audio-player-skeletion";
+import { auth } from "@/lib/firebase/fconfig";
+import { addToHistory } from "@/lib/history/history-utils";
+import { Novel } from "@/lib/apis/api";
+import React from "react";
 
 const SKIP_TIME = 10;
 const COUNTDOWN_DURATION = 120;
@@ -51,6 +55,7 @@ const PLAYBACK_RATES = [
 ];
 
 interface AudioPlayerProps {
+  novels: Novel;
   novelId: string;
   chapterIndex: number;
   totalChapters: number;
@@ -60,7 +65,8 @@ interface AudioPlayerProps {
   onChapterChange: (newIndex: number) => void;
 }
 
-export default function AudioPlayer({
+export default React.memo(function AudioPlayer({
+  novels,
   novelId,
   chapterIndex,
   totalChapters,
@@ -225,13 +231,6 @@ export default function AudioPlayer({
     }
   };
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
-    }
-  };
-
   const handleSeek = (value: number[]) => {
     if (audioRef.current && canPlay) {
       audioRef.current.currentTime = value[0];
@@ -259,9 +258,9 @@ export default function AudioPlayer({
     }
   };
 
-  const handlePlaybackRateChange = (value: string) => {
+  const handlePlaybackRateChange = useCallback((value: string) => {
     setPlaybackRate(value);
-  };
+  }, []);
 
   const handleSkipBack = () => {
     if (audioRef.current && canPlay) {
@@ -282,6 +281,63 @@ export default function AudioPlayer({
     }
   };
 
+  const handlePlayStart = () => {
+    if (!audioRef.current || !audioSrc) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      if (audioRef.current.paused) {
+        audioRef.current
+          .play()
+          .catch((err) => console.error("Playback error:", err));
+        setIsPlaying(true);
+      }
+    }
+
+    const userId = auth.currentUser?.uid;
+    if (userId) {
+      addToHistory(userId, novels, currentTime / duration, chapterIndex + 1);
+    }
+  };
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    if (audioRef.current) {
+      setCurrentTime(e.currentTarget.currentTime);
+      setDuration(e.currentTarget.duration || 0);
+    }
+
+    const currentProgress = e.currentTarget.currentTime;
+    const duration = e.currentTarget.duration;
+
+    if (Math.floor(currentProgress) % 30 === 0 && currentProgress > 0) {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        addToHistory(
+          userId,
+          novels,
+          currentProgress / duration,
+          chapterIndex + 1
+        );
+      }
+    }
+  };
+
+  const handleComplete = () => {
+    if (chapterIndex < totalChapters - 1) {
+      setAutoChapterChange(true);
+      onChapterChange(chapterIndex + 1);
+    }
+
+    const userId = auth.currentUser?.uid;
+    if (userId) {
+      addToHistory(userId, novels, currentTime / duration, chapterIndex + 1);
+    }
+  };
+
+  const formattedDuration = useMemo(() => formatTime(duration), [duration]);
+
   return (
     <div
       className={`mx-auto w-full rounded-lg bg-white p-6 shadow-md dark:bg-gray-900 ${
@@ -293,36 +349,51 @@ export default function AudioPlayer({
         src={audioSrc || undefined}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleTimeUpdate}
+        onEnded={handleComplete}
         className="hidden"
       />
 
       {isLoading ? (
         <AudioPlayerSkeleton isMobileView={isMobileView} />
       ) : (
-        <div className="space-y-6">
+        <div
+          className={`space-y-3 ${isMobileView ? "space-y-2" : "space-y-6"}`}
+        >
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
               onClick={handlePrevChapter}
               disabled={chapterIndex <= 0}
-              className="flex items-center gap-2 px-3 py-2 text-xs sm:text-sm"
+              className={`flex items-center gap-1 px-2 py-1 text-xs ${
+                isMobileView ? "h-8 w-8 p-0" : "px-3 py-2 sm:text-sm"
+              }`}
             >
-              <SkipBack className="h-4 w-4" />
-              <span className="hidden sm:inline">Previous Chapter</span>
+              <SkipBack className={`${isMobileView ? "h-4 w-4" : "h-4 w-4"}`} />
+              {!isMobileView && (
+                <span className="hidden sm:inline">Previous Chapter</span>
+              )}
             </Button>
 
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Chapter {chapterIndex + 1} / {totalChapters}
+              {isMobileView
+                ? `Ch. ${chapterIndex + 1}/${totalChapters}`
+                : `Chapter ${chapterIndex + 1} / ${totalChapters}`}
             </span>
 
             <Button
               variant="outline"
               onClick={handleNextChapter}
               disabled={chapterIndex >= totalChapters - 1}
-              className="flex items-center gap-2 px-3 py-2 text-xs sm:text-sm"
+              className={`flex items-center gap-1 px-2 py-1 text-xs ${
+                isMobileView ? "h-8 w-8 p-0" : "px-3 py-2 sm:text-sm"
+              }`}
             >
-              <span className="hidden sm:inline">Next Chapter</span>
-              <SkipForward className="h-4 w-4" />
+              {!isMobileView && (
+                <span className="hidden sm:inline">Next Chapter</span>
+              )}
+              <SkipForward
+                className={`${isMobileView ? "h-4 w-4" : "h-4 w-4"}`}
+              />
             </Button>
           </div>
 
@@ -333,9 +404,9 @@ export default function AudioPlayer({
               size="icon"
               disabled={!audioSrc || !canPlay}
               title={`Skip back ${SKIP_TIME}s`}
-              className="h-10 w-10"
+              className={`${isMobileView ? "h-8 w-8" : "h-10 w-10"}`}
             >
-              <Rewind className="h-5 w-5" />
+              <Rewind className={`${isMobileView ? "h-4 w-4" : "h-5 w-5"}`} />
             </Button>
 
             <Button
@@ -343,12 +414,12 @@ export default function AudioPlayer({
               variant="outline"
               size="icon"
               // disabled={!audioSrc || !canPlay}
-              className="h-12 w-12"
+              className={`${isMobileView ? "h-10 w-10" : "h-12 w-12"}`}
             >
               {isPlaying ? (
-                <Pause className="h-6 w-6" />
+                <Pause className={`${isMobileView ? "h-5 w-5" : "h-6 w-6"}`} />
               ) : (
-                <Play className="h-6 w-6" />
+                <Play className={`${isMobileView ? "h-5 w-5" : "h-6 w-6"}`} />
               )}
             </Button>
 
@@ -358,14 +429,16 @@ export default function AudioPlayer({
               size="icon"
               disabled={!audioSrc || !canPlay}
               title={`Skip forward ${SKIP_TIME}s`}
-              className="h-10 w-10"
+              className={`${isMobileView ? "h-8 w-8" : "h-10 w-10"}`}
             >
-              <FastForward className="h-5 w-5" />
+              <FastForward
+                className={`${isMobileView ? "h-4 w-4" : "h-5 w-5"}`}
+              />
             </Button>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="w-12 text-right text-xs text-gray-600 dark:text-gray-300 sm:text-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-10 text-right text-xs text-gray-600 dark:text-gray-300">
               {formatTime(currentTime)}
             </span>
 
@@ -378,12 +451,12 @@ export default function AudioPlayer({
               className="flex-1"
             />
 
-            <span className="w-12 text-left text-xs text-gray-600 dark:text-gray-300 sm:text-sm">
-              {formatTime(duration)}
+            <span className="w-10 text-left text-xs text-gray-600 dark:text-gray-300">
+              {formattedDuration}
             </span>
           </div>
 
-          {canPlay && audioSrc && (
+          {!isMobileView && canPlay && audioSrc && (
             <p className="text-center text-xs text-gray-500 dark:text-gray-400">
               Tip: Skip {SKIP_TIME}s backward or forward using the buttons
             </p>
@@ -415,64 +488,115 @@ export default function AudioPlayer({
           )}
           */}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                htmlFor="voice-select"
-                className="text-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Voice
-              </label>
+          {/* Voice and playback controls - hide on mobile */}
+          {!isMobileView && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="voice-select"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Voice
+                </label>
+                <Select value={selectedVoice} onValueChange={handleVoiceChange}>
+                  <SelectTrigger id="voice-select" className="w-full">
+                    <SelectValue placeholder="Select voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VOICE_OPTIONS.map((voice) => (
+                      <SelectItem key={voice.id} value={voice.id}>
+                        {voice.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="speed-select"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Playback Speed
+                </label>
+                <Select
+                  value={playbackRate}
+                  onValueChange={handlePlaybackRateChange}
+                  disabled={!audioSrc || !canPlay}
+                >
+                  <SelectTrigger id="speed-select" className="w-full">
+                    <SelectValue placeholder="Playback speed">
+                      <div className="flex items-center">
+                        <Gauge className="mr-2 h-4 w-4" />
+                        {
+                          PLAYBACK_RATES.find(
+                            (rate) => rate.value === playbackRate
+                          )?.label
+                        }
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLAYBACK_RATES.map((rate) => (
+                      <SelectItem key={rate.value} value={rate.value}>
+                        {rate.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile-only compact speed control */}
+          {isMobileView && (
+            <div className="flex items-center justify-between">
               <Select value={selectedVoice} onValueChange={handleVoiceChange}>
-                <SelectTrigger id="voice-select" className="w-full">
-                  <SelectValue placeholder="Select voice" />
+                <SelectTrigger className="h-8 text-xs px-2 py-0 w-24">
+                  <SelectValue placeholder="Voice" />
                 </SelectTrigger>
                 <SelectContent>
                   {VOICE_OPTIONS.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
+                    <SelectItem
+                      key={voice.id}
+                      value={voice.id}
+                      className="text-xs"
+                    >
                       {voice.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="speed-select"
-                className="text-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Playback Speed
-              </label>
               <Select
                 value={playbackRate}
                 onValueChange={handlePlaybackRateChange}
                 disabled={!audioSrc || !canPlay}
               >
-                <SelectTrigger id="speed-select" className="w-full">
-                  <SelectValue placeholder="Playback speed">
-                    <div className="flex items-center">
-                      <Gauge className="mr-2 h-4 w-4" />
-                      {
-                        PLAYBACK_RATES.find(
-                          (rate) => rate.value === playbackRate
-                        )?.label
-                      }
-                    </div>
+                <SelectTrigger className="h-8 text-xs px-2 py-0 w-20">
+                  <SelectValue placeholder="Speed">
+                    {
+                      PLAYBACK_RATES.find((rate) => rate.value === playbackRate)
+                        ?.label
+                    }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {PLAYBACK_RATES.map((rate) => (
-                    <SelectItem key={rate.value} value={rate.value}>
+                    <SelectItem
+                      key={rate.value}
+                      value={rate.value}
+                      className="text-xs"
+                    >
                       {rate.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
   );
-}
+});

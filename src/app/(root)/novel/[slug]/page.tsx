@@ -1,34 +1,30 @@
+import { NovelCard } from "@/components/audio/novel-card";
+import { NovelBookmarkButton } from "@/components/novel/bookmark-button";
+import NovelPageClient from "@/components/novel/novel-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fetchChapters, fetchNovelBySlug } from "@/lib/apis/api";
+import config from "@/config/data";
+import { fetchChapters, fetchNovelBySlug, fetchNovels } from "@/lib/apis/api";
+import { fallbackImage } from "@/utils/constants";
 import { BookOpen, Clock, Play, Star, Tag, User } from "lucide-react";
+import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import NovelPageClient from "@/components/novel/novel-client";
-import { fallbackImage, sortChapters } from "@/utils/constants";
-import { Metadata } from "next";
-import config from "@/config/data";
 
 interface NovelPageProps {
-  params: { slug: string };
-  searchParams: { source?: string; page?: string };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ source?: string; page?: string }>;
 }
-
-export const wrapInPromise = <T,>(value: T): Promise<T> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(value), 0);
-  });
-};
 
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { novel } = await fetchNovelBySlug(params.slug);
+  const resolvedParams = (await params).slug;
+  const { novel } = await fetchNovelBySlug(resolvedParams);
 
   if (!novel) {
     return {
@@ -47,7 +43,7 @@ export async function generateMetadata({
       description:
         novel.description?.substring(0, 160) ||
         "Listen to this novel in audio format",
-      url: `${config.siteUrl}/novel/${params.slug}`,
+      url: `${config.siteUrl}/novel/${resolvedParams}`,
       type: "book",
       images: [
         {
@@ -59,7 +55,7 @@ export async function generateMetadata({
       ],
     },
     alternates: {
-      canonical: `${config.siteUrl}/novel/${params.slug}`,
+      canonical: `${config.siteUrl}/novel/${resolvedParams}`,
     },
   };
 }
@@ -68,13 +64,14 @@ export default async function NovelPage({
   params,
   searchParams,
 }: NovelPageProps) {
-  const resolvedParams = await wrapInPromise(params);
-  const resolvedSearchParams = await wrapInPromise(searchParams);
+  const resolvedParams = (await params).slug;
+  const { source, page } = await searchParams;
 
-  const { slug } = resolvedParams;
-  const { source, page } = resolvedSearchParams;
-
-  const { novel, sources } = await fetchNovelBySlug(slug, source);
+  const { novel, sources } = await fetchNovelBySlug(resolvedParams, source);
+  const { novels: sameNovels } = await fetchNovels({
+    author: novel?.author || "",
+    limit: 10,
+  });
   if (!novel) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex flex-col items-center justify-center px-4 py-16">
@@ -130,7 +127,7 @@ export default async function NovelPage({
               bestRating: "5",
               ratingCount: "100",
             },
-            url: `${config.siteUrl}/novel/${slug}`,
+            url: `${config.siteUrl}/novel/${resolvedParams}`,
             image: novel.cover || novel.thumb || fallbackImage,
           }),
         }}
@@ -211,6 +208,8 @@ export default async function NovelPage({
                   <BookOpen className="mr-2 h-5 w-5" /> Latest Chapter
                 </Button>
 
+                <NovelBookmarkButton novelId={novel._id} />
+
                 {chapters.length > 0 && (
                   <div className="flex items-center text-gray-300 ml-2 bg-gray-800 px-3 py-1 rounded">
                     <span className="font-medium">
@@ -243,8 +242,9 @@ export default async function NovelPage({
 
             <TabsContent value="chapters">
               <NovelPageClient
+                novels={novel}
                 novelId={novel._id}
-                novelSlug={slug}
+                novelSlug={resolvedParams}
                 chapters={chapters}
                 initialChapterIndex={initialChapterIndex}
               />
@@ -338,6 +338,25 @@ export default async function NovelPage({
               </Card>
             </TabsContent>
           </Tabs>
+          <div className="mt-8 bg-gray-50 dark:bg-gray-900 p-5 rounded border border-gray-200 dark:border-gray-800">
+            <h3 className="font-semibold text-lg mb-3">
+              Novels from the same author
+            </h3>
+            <div className="relative">
+              <div className="overflow-x-auto pb-4 scrollbar-hide">
+                <div className="flex space-x-4 min-w-max">
+                  {sameNovels.map((novel) => (
+                    <div key={novel._id} className="w-48 flex-shrink-0">
+                      <NovelCard novel={novel} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {sameNovels.length > 5 && (
+                <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white dark:from-black pointer-events-none" />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>

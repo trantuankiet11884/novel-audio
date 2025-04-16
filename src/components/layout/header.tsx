@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -86,6 +87,9 @@ export function Header() {
                     {user.username || user.email || "User"}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Link href="/user">Profile</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Link href="/vip">Listen Audio With No Ads</Link>
                   </DropdownMenuItem>

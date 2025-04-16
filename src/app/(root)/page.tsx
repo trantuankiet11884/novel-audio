@@ -6,6 +6,7 @@ import Link from "next/link";
 import { FaChevronRight } from "react-icons/fa";
 import { Metadata } from "next";
 import config from "@/config/data";
+import { ContinueListeningSection } from "@/components/home/continue-listening";
 
 export const revalidate = 3600;
 
@@ -31,6 +32,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: config.siteUrl,
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+  },
   keywords: [
     "audio novels",
     "listen to novels",
@@ -43,10 +48,10 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const [top10Novels, latestNovels2] = await Promise.all([
     fetchTop10Novels(),
-    fetchNovels({ sort: "updatedAt", limit: 20 }),
+    fetchNovels({ sort: "time_new_chapter", limit: 20 }),
   ]);
 
-  const sortedLatestNovels2 = {
+  const sortedLatestNovels = {
     ...latestNovels2,
     novels: [...latestNovels2.novels].sort(
       (a, b) =>
@@ -153,8 +158,9 @@ export default async function HomePage() {
             </section>
           )
         )}
+        <ContinueListeningSection />
 
-        <UpdatedNovels novels={sortedLatestNovels2.novels} />
+        <UpdatedNovels novels={sortedLatestNovels.novels} />
       </div>
     </>
   );

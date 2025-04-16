@@ -30,18 +30,43 @@ export interface Chapter {
   slug: string;
 }
 
+export interface BookMark {
+  meassage: {
+    [key: string]: {
+      _id: string;
+      chapter: number;
+      bookmark: boolean;
+      read: boolean;
+      time: number;
+      chapters: number;
+      name: string;
+      status: string;
+      thumb: string;
+      slug: string;
+    };
+  };
+}
+
 export async function fetchNovels({
   sort = "views",
+  keyword = "",
   limit = 20,
   genre,
   skip = 0,
   page = 1,
+  chapters = "",
+  status = "",
+  author = "",
 }: {
   sort?: string;
   limit?: number;
   genre?: string;
   skip?: number;
   page?: number;
+  keyword?: string;
+  chapters?: string;
+  status?: string;
+  author?: string;
 }): Promise<{
   novels: Novel[];
   total: number;
@@ -53,12 +78,19 @@ export async function fetchNovels({
   const API_URL = "http://139.180.212.113:3007";
 
   try {
-    const response = await axios.post(`${API_URL}/book/search`, {
-      sort,
-      limit,
-      cats: genre ? [genre] : [],
-      skip,
-    });
+    const response = await axios.post(
+      `https://api.novelfull.audio/book/search`,
+      {
+        chapters,
+        status,
+        keyword,
+        sort,
+        limit,
+        cats: genre ? [genre] : [],
+        skip,
+        author,
+      }
+    );
     const data = response.data;
 
     if (!Array.isArray(data.results)) {
@@ -254,3 +286,26 @@ export async function fetchGenres({
     return { genres: [], total: 0 };
   }
 }
+
+export const postBookMark = async (
+  novelId: string,
+  type = "bookmark",
+  value = true
+) => {
+  const response = await axios.post(
+    `https://api.novelfull.audio/user/web/bookmark`,
+    {
+      value,
+      type,
+      truyenId: novelId,
+    }
+  );
+  return response.data;
+};
+
+export const getBookMark = async () => {
+  const response: BookMark = await axios.get(
+    `https://api.novelfull.audio/user/web/bookmark`
+  );
+  return response.meassage;
+};

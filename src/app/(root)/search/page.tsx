@@ -1,82 +1,32 @@
-import SearchClient from "@/components/search/search-client";
-import { fetchGenres, fetchNovels } from "@/lib/apis/api";
-import { Metadata } from "next";
-import config from "@/config/data";
+import { SearchClient } from "@/components/search/search-client";
+import { SearchResults } from "@/components/search/search-result";
+import { Suspense } from "react";
 
-// Revalidate every hour
-export const revalidate = 3600;
-
-export const metadata: Metadata = {
-  title: "Search Novels | MTL Novel Audio",
-  description:
-    "Search through our extensive library of audio novels. Filter by genres, ratings, and more to find your perfect listen.",
-  openGraph: {
-    title: "Search Novels | MTL Novel Audio",
-    description:
-      "Search through our extensive library of audio novels. Filter by genres, ratings, and more.",
-    url: `${config.siteUrl}/search`,
-    type: "website",
-  },
-  alternates: {
-    canonical: `${config.siteUrl}/search`,
-  },
-  keywords: [
-    "novel search",
-    "find novels",
-    "audio novel search",
-    "filter novels",
-    "browse novels",
-  ],
-};
-
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: { page?: string; q?: string; genre?: string; sort?: string };
-}) {
-  const page = parseInt(searchParams.page || "1", 10);
-  const limit = 20;
-  const skip = (page - 1) * limit;
-  const genre = searchParams.genre || "";
-  const sort = searchParams.sort || "views";
-
-  const { novels, total } = await fetchNovels({
-    genre,
-    sort,
-    limit,
-    skip,
-  });
-  const { genres } = await fetchGenres({ limit: 100 });
-
+export default function SearchPage() {
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SearchResultsPage",
-            name: "Novel Search Results",
-            description: `Search results for ${
-              sort ? `"${sort}"` : "all novels"
-            }${genre ? ` in ${genre} genre` : ""}`,
-            url: `${config.siteUrl}/search${
-              searchParams.sort
-                ? `?${new URLSearchParams(
-                    searchParams.sort as unknown as Record<string, string>
-                  ).toString()}`
-                : ""
-            }`,
-          }),
-        }}
-      />
-      <SearchClient
-        initialNovels={novels}
-        totalNovels={total}
-        genres={genres}
-        currentPage={page}
-        novelsPerPage={limit}
-      />
-    </>
+    <main className="container mx-auto py-8 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Search Novels</h1>
+        <p className="text-muted-foreground mt-2">
+          Find your next favorite novel using the filters
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-1">
+          <div className="sticky top-20">
+            <Suspense>
+              <SearchClient />
+            </Suspense>
+          </div>
+        </div>
+
+        <div className="lg:col-span-3">
+          <Suspense>
+            <SearchResults />
+          </Suspense>
+        </div>
+      </div>
+    </main>
   );
 }

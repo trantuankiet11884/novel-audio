@@ -3,7 +3,7 @@ import { Novel } from "@/lib/apis/api";
 import { fallbackImage } from "@/utils/constants";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FaStar, FaHeadphones, FaBook } from "react-icons/fa";
 
 interface NovelCardProps {
@@ -12,7 +12,12 @@ interface NovelCardProps {
 }
 
 export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
-  const [coverImage, setCoverImage] = useState(novel.cover || novel.thumb);
+  const [imageError, setImageError] = useState(false);
+  const coverImage = useMemo(() => {
+    return imageError
+      ? fallbackImage
+      : novel.cover || novel.thumb || fallbackImage;
+  }, [novel.cover, novel.thumb, imageError]);
 
   if (variant === "horizontal") {
     return (
@@ -22,12 +27,14 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
       >
         <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md shadow-sm">
           <Image
-            src={coverImage || fallbackImage}
-            alt={novel.name || novel.title}
+            src={coverImage}
+            alt={novel.name || novel.title || "Novel cover"}
             fill
             className="object-cover"
             sizes="56px"
-            onError={() => setCoverImage(fallbackImage)}
+            onError={() => setImageError(true)}
+            priority={true}
+            loading="eager"
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -59,12 +66,14 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
     >
       <div className="relative pt-[140%]">
         <Image
-          src={coverImage || fallbackImage}
-          alt={novel.name || novel.title}
+          src={coverImage}
+          alt={novel.name || novel.title || "Novel cover"}
           fill
           className="object-cover"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 200px"
-          onError={() => setCoverImage(fallbackImage)}
+          onError={() => setImageError(true)}
+          priority={false}
+          loading="lazy"
         />
       </div>
       <div className="flex flex-col flex-1 p-3">
@@ -72,11 +81,11 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
         <div className="mt-auto flex flex-col items-start gap-1 md:flex-row md:justify-between text-xs">
           <div className="flex items-center text-gray-500">
             <FaBook className="mr-1 h-3 w-3" />
-            <span>{novel.chapters.toLocaleString()} Chapters</span>
+            <span>{novel?.chapters?.toLocaleString()} Chapters</span>
           </div>
           <div className="flex items-center text-gray-500 dark:text-gray-400">
             <FaHeadphones className="mr-1 h-3 w-3" />
-            <span>{novel.views.toLocaleString()}</span>
+            <span>{novel?.views?.toLocaleString()}</span>
           </div>
         </div>
       </div>

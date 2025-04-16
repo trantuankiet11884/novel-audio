@@ -1,7 +1,7 @@
 import config from "@/config/data";
 import { Metadata } from "next";
 
-export const metadataBase: URL = new URL(config.siteUrl);
+export const metadataBase = new URL(config.siteUrl);
 
 export const defaultMetadata: Metadata = {
   title: {
@@ -10,7 +10,7 @@ export const defaultMetadata: Metadata = {
   },
   description: config.description,
   authors: [{ name: config.author }],
-  metadataBase: metadataBase,
+  metadataBase,
   openGraph: {
     title: config.title,
     description: config.description,

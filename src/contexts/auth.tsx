@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut(auth);
       setUser(null);
       localStorage.removeItem("user");
+      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out:", error);
     }

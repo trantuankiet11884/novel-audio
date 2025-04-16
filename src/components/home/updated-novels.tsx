@@ -1,14 +1,69 @@
+"use client";
 import { FaChevronRight } from "react-icons/fa";
 
-import Link from "next/link";
 import { Novel } from "@/lib/apis/api";
-import { formatTimeAgo } from "@/utils/constants";
+import { fallbackImage } from "@/utils/constants";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type UpdatedNovelProps = {
   novels: Novel[];
 };
 
 export default function UpdatedNovels({ novels }: UpdatedNovelProps) {
+  const [coverImage, setCoverImage] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [timeStrings, setTimeStrings] = useState<string[]>([]);
+
+  // Initialize cover images array when component mounts
+  useEffect(() => {
+    setCoverImage(novels.map((novel) => novel.cover || novel.thumb));
+    setMounted(true);
+  }, [novels]);
+
+  // Update time strings only on client-side after mounting
+  useEffect(() => {
+    if (mounted) {
+      // Calculate client-side time strings only after component is mounted
+      setTimeStrings(
+        novels.map((novel) => formatTimeAgo(Number(novel.updatedAt)))
+      );
+    }
+  }, [mounted, novels]);
+
+  // Client-side only time formatter, properly handling Unix timestamp in seconds
+  const formatTimeAgo = (timestamp: number) => {
+    // Convert Unix timestamp (seconds) to milliseconds for JS Date
+    const timestampMs = timestamp * 1000;
+    const now = Date.now();
+    const diffMs = now - timestampMs;
+    const seconds = Math.floor(diffMs / 1000);
+
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+    const years = Math.floor(months / 12);
+    return `${years} year${years === 1 ? "" : "s"} ago`;
+  };
+
+  const handleImageError = (novelId: string) => {
+    setCoverImage((prev) => {
+      const newCoverImages = [...prev];
+      const index = novels.findIndex((n) => n._id === novelId);
+      if (index !== -1) {
+        newCoverImages[index] = fallbackImage;
+      }
+      return newCoverImages;
+    });
+  };
+
   return (
     <section className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-6">
@@ -30,16 +85,22 @@ export default function UpdatedNovels({ novels }: UpdatedNovelProps) {
           >
             <div className="flex items-center gap-4 p-4">
               <div className="hidden sm:block flex-shrink-0">
-                <div className="w-16 h-20 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700">
-                  {novel.cover ||
-                    (novel.thumb && (
-                      <img
-                        src={novel.cover || novel.thumb}
-                        alt={novel.title || novel.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ))}
+                <div className="relative w-16 h-20 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700">
+                  {mounted && (
+                    <Image
+                      src={
+                        coverImage[
+                          novels.findIndex((n) => n._id === novel._id)
+                        ] || fallbackImage
+                      }
+                      alt={novel.title || novel.name || "Novel Image"}
+                      fill
+                      sizes="100%"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={() => handleImageError(novel._id)}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -49,7 +110,7 @@ export default function UpdatedNovels({ novels }: UpdatedNovelProps) {
                     {novel.title || novel.name}
                   </h3>
                   <span className="text-sm text-gray-500">
-                    ({novel.chapters} chapters)
+                    ({novel.chapters.toLocaleString()} chapters)
                   </span>
                 </div>
 
@@ -62,9 +123,12 @@ export default function UpdatedNovels({ novels }: UpdatedNovelProps) {
                   <span className="text-gray-500 whitespace-nowrap">
                     Updated{" "}
                     <time className="font-medium text-gray-600 dark:text-gray-300">
-                      {formatTimeAgo(Number(novel.updatedAt))}
-                    </time>{" "}
-                    ago
+                      {!mounted
+                        ? "recently"
+                        : timeStrings[
+                            novels.findIndex((n) => n._id === novel._id)
+                          ] || "recently"}
+                    </time>
                   </span>
                 </div>
               </div>

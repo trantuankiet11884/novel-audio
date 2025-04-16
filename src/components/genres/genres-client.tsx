@@ -374,7 +374,7 @@ export function ClientGenrePage({ genres }: { genres: string[] }) {
 
         {/* Desktop sidebar for genres */}
         <div
-          className="hidden lg:block w-1/4 p-5 border-r border-gray-200 dark:border-gray-700 sticky top-20 self-start max-h-[calc(100vh-160px)] overflow-y-auto"
+          className="hidden lg:block w-1/4 p-5 border-r border-gray-200 dark:border-gray-700 sticky top-20 self-start max-h-[calc(100vh-160px)] overflow-y-hidden"
           ref={genreListRef}
         >
           <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
