@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -10,27 +8,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Novel } from "@/lib/apis/api";
 import {
-  Pause,
-  Play,
-  SkipBack,
-  SkipForward,
-  Clock,
-  Rewind,
-  FastForward,
-  Gauge,
-} from "lucide-react";
-import {
+  cleanText,
   getBase64Bin,
   getChapterText,
-  cleanText,
   splitText,
 } from "@/lib/audio";
-import AudioPlayerSkeleton from "./audio-player-skeletion";
 import { auth } from "@/lib/firebase/fconfig";
 import { addToHistory } from "@/lib/history/history-utils";
-import { Novel } from "@/lib/apis/api";
-import React from "react";
+import {
+  FastForward,
+  Gauge,
+  Pause,
+  Play,
+  Rewind,
+  SkipBack,
+  SkipForward,
+} from "lucide-react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import AudioPlayerSkeleton from "./audio-player-skeletion";
 
 const SKIP_TIME = 10;
 const COUNTDOWN_DURATION = 120;

@@ -30,7 +30,7 @@ interface ChapterListProps {
   chapters: Chapter[];
   novelSlug: string;
   currentChapterIndex?: number;
-  onChapterSelect: (index: number) => void; // New callback prop
+  onChapterSelect: (index: number) => void;
 }
 
 const CHAPTERS_PER_PAGE = 100;
