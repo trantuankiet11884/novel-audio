@@ -169,7 +169,7 @@ export default async function HomePage() {
             <div className="rounded-lg border shadow-sm p-2 bg-card">
               {/* Using Shadcn UI Tabs */}
               <Tabs defaultValue={tabSections[0].id} className="w-full">
-                <TabsList className="grid grid-cols-4 mb-4">
+                <TabsList className="grid grid-cols-4 mb-4 w-full">
                   {tabSections.map((section) => (
                     <TabsTrigger
                       key={section.id}
