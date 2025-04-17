@@ -3,8 +3,8 @@ import { Novel } from "@/lib/apis/api";
 import { fallbackImage } from "@/utils/constants";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo } from "react";
-import { FaStar, FaHeadphones, FaBook } from "react-icons/fa";
+import { useMemo, useState } from "react";
+import { FaBook, FaHeadphones } from "react-icons/fa";
 
 interface NovelCardProps {
   novel: Novel;
@@ -38,7 +38,7 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
           />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium line-clamp-2">{novel.name}</h3>
+          <h3 className="text-sm font-medium line-clamp-1">{novel.name}</h3>
           {novel.author && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {novel.author}
@@ -48,10 +48,6 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
             <div className="flex items-center text-xs text-gray-500">
               <FaBook className="mr-1 h-3 w-3" />
               <span>{novel.chapters.toLocaleString()} Chapters</span>
-            </div>
-            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-              <FaHeadphones className="mr-1 h-3 w-3" />
-              <span>{novel.views.toLocaleString()} views</span>
             </div>
           </div>
         </div>
@@ -78,8 +74,8 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
       </div>
       <div className="flex flex-col flex-1 p-3">
         <h3 className="font-medium line-clamp-1 mb-2">{novel.name}</h3>
-        <div className="mt-auto flex flex-col items-start gap-1 md:flex-row md:justify-between text-xs">
-          <div className="flex items-center text-gray-500">
+        <div className="mt-auto flex flex-col items-start gap-1 text-xs">
+          <div className="flex justify-center items-start text-gray-500">
             <FaBook className="mr-1 h-3 w-3" />
             <span>{novel?.chapters?.toLocaleString()} Chapters</span>
           </div>
