@@ -11,6 +11,7 @@ interface User {
   order?: string;
   email?: string;
   username?: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const userData = {
               ...response.data.user,
               email: firebaseUser.email,
+              avatar: response.data.user.avatar,
             };
             setUser(userData);
             localStorage.setItem("user", JSON.stringify(userData));
