@@ -261,9 +261,10 @@ export default async function HomePage() {
                         <h3 className="font-bold">{section.title}</h3>
                         <Link
                           href={section.href}
-                          className="text-xs text-primary hover:underline flex items-center"
+                          className="text-sm text-primary hover:underline flex items-center px-3 py-2"
+                          aria-label={`View more ${section.title.toLowerCase()} sorted by views`}
                         >
-                          More <FaChevronRight className="ml-1 h-2 w-2" />
+                          More <FaChevronRight className="ml-2 h-4 w-4" />
                         </Link>
                       </div>
                       <div className="space-y-3">
