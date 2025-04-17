@@ -30,7 +30,7 @@ const HeroSectionNovel = ({ novel }: HeroSectionNovelProps) => {
             fill
             className="object-cover rounded-md shadow-md z-10"
             sizes="(max-width: 768px) 100vw, 320px"
-            priority
+            priority={true}
             onError={() => setCoverImage(fallbackImage)}
           />
           <div className="absolute top-2 right-2 bg-gray-200 text-black font-bold px-2 py-1 rounded text-sm z-20">

@@ -3,8 +3,8 @@ import { Novel } from "@/lib/apis/api";
 import { fallbackImage } from "@/utils/constants";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { FaBook, FaHeadphones } from "react-icons/fa";
+import { useState, useMemo } from "react";
+import { FaStar, FaHeadphones, FaBook } from "react-icons/fa";
 
 interface NovelCardProps {
   novel: Novel;

@@ -4,11 +4,17 @@ import { AuthProvider } from "@/contexts/auth";
 import config from "@/config/data";
 import Script from "next/script";
 import { BackToTop } from "@/components/back-to-top";
+import { Suspense } from "react";
+import { HomeSkeleton } from "@/components/home/home-skeleton";
 
 const ClientLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex min-h-screen flex-col">
-      <Script id="schema-organization" type="application/ld+json">
+      <Script
+        id="schema-organization"
+        type="application/ld+json"
+        strategy="afterInteractive"
+      >
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
@@ -28,7 +34,11 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
         })}
       </Script>
 
-      <Script id="schema-website" type="application/ld+json">
+      <Script
+        id="schema-website"
+        type="application/ld+json"
+        strategy="afterInteractive"
+      >
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
@@ -47,7 +57,9 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
 
       <AuthProvider>
         <Header />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <Suspense fallback={<HomeSkeleton />}>{children}</Suspense>
+        </main>
         <Footer />
         <BackToTop />
       </AuthProvider>

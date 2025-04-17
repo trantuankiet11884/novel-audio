@@ -5,7 +5,12 @@ import { GenrePagination } from "@/components/genres/genre-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { fetchNovels } from "@/lib/apis/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { BookOpen, Filter, Search, X } from "lucide-react";
@@ -361,6 +366,7 @@ export function ClientGenrePage({ genres }: { genres: string[] }) {
                 <Filter className="h-5 w-5" />
               </Button>
             </SheetTrigger>
+            <SheetTitle></SheetTitle>
             <SheetContent side="left" className="w-full sm:max-w-md p-2">
               <div className="h-full py-4 overflow-y-auto">
                 <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">

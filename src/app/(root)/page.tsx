@@ -8,6 +8,59 @@ import { Metadata } from "next";
 import config from "@/config/data";
 import { ContinueListeningSection } from "@/components/home/continue-listening";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Suspense } from "react";
+
+// Add skeleton components
+const NovelSliderSkeleton = () => (
+  <div className="w-full h-[400px] bg-gray-300 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+);
+
+const NovelCardSkeleton = () => (
+  <div className="flex flex-col animate-pulse">
+    <div className="h-48 sm:h-56 bg-gray-300 dark:bg-gray-700 rounded-lg mb-2"></div>
+    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-1"></div>
+    <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+  </div>
+);
+
+const LatestNovelsSkeleton = () => (
+  <section>
+    <div className="flex items-center justify-between mb-4 sm:mb-6">
+      <div className="h-8 w-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
+      <div className="h-4 w-36 bg-gray-300 dark:bg-gray-700 rounded"></div>
+    </div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+      {[...Array(10)].map((_, i) => (
+        <NovelCardSkeleton key={i} />
+      ))}
+    </div>
+  </section>
+);
+
+const TabsSkeleton = () => (
+  <div className="rounded-lg border shadow-sm p-2 bg-card animate-pulse">
+    <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded mb-4"></div>
+    <div className="space-y-3">
+      {[...Array(10)].map((_, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <div className="h-5 w-5 bg-gray-400 dark:bg-gray-600 rounded"></div>
+          <div className="h-16 flex-1 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const RankingNovelsSkeleton = () => (
+  <section>
+    <div className="h-8 w-48 bg-gray-300 dark:bg-gray-700 rounded mb-4"></div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      {[...Array(10)].map((_, i) => (
+        <NovelCardSkeleton key={i} />
+      ))}
+    </div>
+  </section>
+);
 
 export const revalidate = 3600;
 
@@ -64,7 +117,6 @@ export default async function HomePage() {
     ),
   };
 
-  // Chuẩn bị dữ liệu cho tabs bên phải
   const tabSections = [
     {
       id: "top-10-novels",
@@ -132,11 +184,13 @@ export default async function HomePage() {
       <div className="container mx-auto px-4 py-6 sm:py-8 space-y-8 sm:space-y-10">
         {/* Hero section */}
         <section className="relative overflow-hidden">
-          <NovelSlider
-            sliderData={
-              (await fetchNovels({ sort: "updatedAt", limit: 10 })).novels
-            }
-          />
+          <Suspense fallback={<NovelSliderSkeleton />}>
+            <NovelSlider
+              sliderData={
+                (await fetchNovels({ sort: "updatedAt", limit: 10 })).novels
+              }
+            />
+          </Suspense>
         </section>
 
         {/* Main content with sidebar layout */}
@@ -144,82 +198,101 @@ export default async function HomePage() {
           {/* Main content area - 3/4 width */}
           <div className="w-full lg:w-3/4 space-y-8">
             {/* Latest Novels Section */}
-            <section>
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold">Latest Novels</h2>
-                <Link
-                  href="/search?sort=time_new_chapter"
-                  className="flex items-center text-sm text-primary hover:underline font-medium"
-                >
-                  View all <FaChevronRight className="ml-1 h-3 w-3" />
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
-                {sortedLatestNovels.novels.map((novel, idx) => (
-                  <NovelCard key={`latest-${novel._id}-${idx}`} novel={novel} />
-                ))}
-              </div>
-            </section>
+            <Suspense fallback={<LatestNovelsSkeleton />}>
+              <section>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold">
+                    Latest Novels
+                  </h2>
+                  <Link
+                    href="/search?sort=time_new_chapter"
+                    className="flex items-center text-sm text-primary hover:underline font-medium"
+                    aria-label="View all latest novels"
+                  >
+                    View all latest novels{" "}
+                    <FaChevronRight className="ml-1 h-3 w-3" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {sortedLatestNovels.novels.map((novel, idx) => (
+                    <NovelCard
+                      key={`latest-${novel._id}-${idx}`}
+                      novel={novel}
+                    />
+                  ))}
+                </div>
+              </section>
+            </Suspense>
 
-            <ContinueListeningSection />
+            <Suspense
+              fallback={
+                <div className="h-40 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+              }
+            >
+              <ContinueListeningSection />
+            </Suspense>
           </div>
 
           {/* Sidebar - 1/4 width */}
           <div className="w-full lg:w-1/4 space-y-6">
-            <div className="rounded-lg border shadow-sm p-2 bg-card">
-              {/* Using Shadcn UI Tabs */}
-              <Tabs defaultValue={tabSections[0].id} className="w-full">
-                <TabsList className="grid grid-cols-4 mb-4 w-full">
-                  {tabSections.map((section) => (
-                    <TabsTrigger
-                      key={section.id}
-                      value={section.id}
-                      className="text-xs sm:text-sm"
-                    >
-                      {section.title.split(" ")[0]}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                {tabSections.map((section, index) => (
-                  <TabsContent
-                    key={`content-${section.id}`}
-                    value={section.id}
-                    className="mt-0"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold">{section.title}</h3>
-                      <Link
-                        href={section.href}
-                        className="text-xs text-primary hover:underline flex items-center"
+            <Suspense fallback={<TabsSkeleton />}>
+              <div className="rounded-lg border shadow-sm p-2 bg-card">
+                {/* Using Shadcn UI Tabs */}
+                <Tabs defaultValue={tabSections[0].id} className="w-full">
+                  <TabsList className="grid grid-cols-4 mb-4 w-full">
+                    {tabSections.map((section) => (
+                      <TabsTrigger
+                        key={section.id}
+                        value={section.id}
+                        className="text-xs sm:text-sm"
                       >
-                        More <FaChevronRight className="ml-1 h-2 w-2" />
-                      </Link>
-                    </div>
-                    <div className="space-y-3">
-                      {section.novels.map((novel, idx) => (
-                        <div
-                          key={`${section.id}-${novel._id}`}
-                          className="flex items-center gap-3"
+                        {section.title.split(" ")[0]}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {tabSections.map((section, index) => (
+                    <TabsContent
+                      key={`content-${section.id}`}
+                      value={section.id}
+                      className="mt-0"
+                    >
+                      <div className="flex items-center justify-between mb-3 w-full">
+                        <h3 className="font-bold">{section.title}</h3>
+                        <Link
+                          href={section.href}
+                          className="text-xs text-primary hover:underline flex items-center"
                         >
-                          <span className="font-bold text-primary min-w-6 text-center">
-                            {idx + 1}
-                          </span>
-                          <NovelCard novel={novel} variant="horizontal" />
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </div>
+                          More <FaChevronRight className="ml-1 h-2 w-2" />
+                        </Link>
+                      </div>
+                      <div className="space-y-3">
+                        {section.novels.map((novel, idx) => (
+                          <div
+                            key={`${section.id}-${novel._id}`}
+                            className="flex items-center gap-3"
+                          >
+                            <span className="font-bold text-primary min-w-6 text-center">
+                              {idx + 1}
+                            </span>
+                            <NovelCard novel={novel} variant="horizontal" />
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </div>
+            </Suspense>
           </div>
         </div>
 
         {/* Renamed component from UpdatedNovels to Ranking */}
-        <section>
-          <RankingNovels novels={rankingNovels.novels} />
-        </section>
+        <Suspense fallback={<RankingNovelsSkeleton />}>
+          <section>
+            <RankingNovels novels={rankingNovels.novels} />
+          </section>
+        </Suspense>
       </div>
     </>
   );

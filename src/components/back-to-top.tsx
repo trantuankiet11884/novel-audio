@@ -34,7 +34,7 @@ export function BackToTop() {
   return (
     <Button
       onClick={scrollToTop}
-      aria-label="Back to top"
+      aria-label="Scroll to top"
       className={cn(
         "fixed bottom-6 right-6 z-50 h-10 w-10 rounded-full shadow-lg transition-all duration-300",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0"

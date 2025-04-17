@@ -22,6 +22,37 @@ export default function RankingNovels({ novels }: RankingNovelProps) {
     setMounted(true);
   }, [novels]);
 
+  // Update time strings only on client-side after mounting
+  useEffect(() => {
+    if (mounted) {
+      // Calculate client-side time strings only after component is mounted
+      setTimeStrings(
+        novels.map((novel) => formatTimeAgo(Number(novel.updatedAt)))
+      );
+    }
+  }, [mounted, novels]);
+
+  // Client-side only time formatter, properly handling Unix timestamp in seconds
+  const formatTimeAgo = (timestamp: number) => {
+    // Convert Unix timestamp (seconds) to milliseconds for JS Date
+    const timestampMs = timestamp * 1000;
+    const now = Date.now();
+    const diffMs = now - timestampMs;
+    const seconds = Math.floor(diffMs / 1000);
+
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+    const years = Math.floor(months / 12);
+    return `${years} year${years === 1 ? "" : "s"} ago`;
+  };
+
   const handleImageError = (novelId: string) => {
     setCoverImage((prev) => {
       const newCoverImages = [...prev];

@@ -14,13 +14,16 @@ import {
 } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { fallbackImage } from "@/utils/constants";
+import { OptimizedImage } from "../optimize-image";
 
 type NovelSliderProps = {
   sliderData: Novel[];
+  priorityImage?: boolean;
 };
 
 const NovelSlider = memo(function NovelSlider({
   sliderData,
+  priorityImage = false,
 }: NovelSliderProps) {
   const [isClient, setIsClient] = useState(false);
   const swiperRef = useRef(null);
@@ -100,14 +103,13 @@ const NovelSlider = memo(function NovelSlider({
                   className="block cursor-pointer"
                 >
                   <div className="relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden shadow-lg">
-                    <Image
+                    <OptimizedImage
                       src={novel.cover || novel.thumb || fallbackImage}
                       alt={novel.title || novel.name}
-                      fill
-                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 33vw"
+                      width={800}
+                      height={500}
+                      priority={index === 0 && priorityImage}
                       className="object-cover w-full h-full"
-                      priority={index < 2} // Chỉ ưu tiên tải trước 2 ảnh đầu tiên
-                      loading={index < 2 ? "eager" : "lazy"}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-6">
                       <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white line-clamp-2">
