@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, useRef, memo } from "react";
 import { Novel } from "@/lib/apis/api";
-import Link from "next/link";
+import { fallbackImage } from "@/utils/constants";
 import Image from "next/image";
+import Link from "next/link";
+import { memo, useEffect, useRef, useState } from "react";
 import "swiper/css";
 import "swiper/css/effect-coverflow";
 import "swiper/css/navigation";
@@ -13,8 +14,6 @@ import {
   Pagination,
 } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { fallbackImage } from "@/utils/constants";
-import { OptimizedImage } from "../optimize-image";
 
 type NovelSliderProps = {
   sliderData: Novel[];
@@ -103,7 +102,7 @@ const NovelSlider = memo(function NovelSlider({
                   className="block cursor-pointer"
                 >
                   <div className="relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden shadow-lg">
-                    <OptimizedImage
+                    <Image
                       src={novel.cover || novel.thumb || fallbackImage}
                       alt={novel.title || novel.name}
                       width={800}
