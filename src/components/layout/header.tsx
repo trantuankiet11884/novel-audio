@@ -190,12 +190,6 @@ export function Header() {
           </Sheet>
 
           <Link href="/" className="flex items-center gap-2 group">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-200"
-            >
-              <span className="font-bold text-primary">M</span>
-            </motion.div>
             <span className="font-bold text-xl group-hover:text-primary transition-colors duration-200">
               MTL Novel Audio
             </span>
