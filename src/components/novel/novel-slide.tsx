@@ -107,7 +107,9 @@ const NovelSlider = memo(function NovelSlider({
                       alt={novel.title || novel.name}
                       width={800}
                       height={500}
-                      priority={index === 0 && priorityImage}
+                      priority={index === 1 && priorityImage}
+                      loading={index === 1 ? "eager" : "lazy"}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover w-full h-full"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-6">
