@@ -1,9 +1,9 @@
+import { ThemeProvider } from "@/components/theme-provider";
+import config from "@/config/data";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import NextTopLoader from "nextjs-toploader";
-import config from "@/config/data";
+import "./globals.css";
 
 const geistSans = Geist({
   subsets: ["latin"],

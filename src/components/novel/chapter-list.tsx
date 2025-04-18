@@ -256,33 +256,18 @@ export default function ChapterList({
                         : ""
                     }
                   >
-                    <TableCell className="font-medium py-2.5 pr-0">
-                      <button
-                        onClick={() => onChapterSelect(originalIndex)}
-                        className={`hover:underline text-left cursor-pointer line-clamp-2 ${
-                          isCurrentChapter ? "font-bold text-primary" : ""
-                        }`}
-                      >
-                        {chapter.title}
-                        {isCurrentChapter && (
-                          <span className="ml-1 text-xs bg-primary/20 px-1.5 py-0.5 rounded">
-                            Current
-                          </span>
-                        )}
-                      </button>
-                    </TableCell>
-                    <TableCell className="text-right py-2.5 pl-1">
-                      <Button
-                        variant={isCurrentChapter ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => onChapterSelect(originalIndex)}
-                        className="h-7 w-7 p-0"
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        <span className="sr-only">
-                          Listen to {chapter.title}
+                    <TableCell
+                      onClick={() => onChapterSelect(originalIndex)}
+                      className={`font-medium py-2.5 pr-0 hover:underline text-left cursor-pointer line-clamp-2 ${
+                        isCurrentChapter ? "font-bold text-primary" : ""
+                      }`}
+                    >
+                      {chapter.title}
+                      {isCurrentChapter && (
+                        <span className="ml-1 text-xs bg-primary/20 px-1.5 py-0.5 rounded">
+                          Current
                         </span>
-                      </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

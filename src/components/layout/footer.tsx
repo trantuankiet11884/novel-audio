@@ -1,4 +1,3 @@
-// components/Footer.tsx
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -8,7 +7,7 @@ const Footer = () => {
         <div className="flex flex-col gap-4 sm:gap-6">
           {/* Links & Navigation */}
           <nav aria-label="Footer Navigation">
-            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-3 text-sm text-gray-600 dark:text-gray-400">
+            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-3 text-sm text-gray-700 dark:text-gray-300">
               <li>
                 <a
                   href="/privacy-policy"
@@ -50,11 +49,11 @@ const Footer = () => {
 
           {/* Copyright Information */}
           <div className="text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               © {currentYear} Audiobooks Novel Full Reader MTL Novel Audio. All
               Rights Reserved.
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
               <a
                 href="mailto:support@mtlnovel.audio"
                 className="hover:underline"

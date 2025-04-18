@@ -1,7 +1,6 @@
-import CryptoJS from "crypto-js";
-import { decode } from "html-entities";
-import sanitizeHtml from "sanitize-html";
 import axios from "axios";
+import CryptoJS from "crypto-js";
+import sanitizeHtml from "sanitize-html";
 
 export async function getBase64Bin(
   text: string,
@@ -71,7 +70,43 @@ export function cleanText(html: string): string {
   });
 }
 
-export function splitText(text: string): string[] {
+export function splitText(
+  text: string,
+  forSentences: boolean = false
+): string[] {
+  if (forSentences) {
+    const sentences = text
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s && s.length > 0);
+
+    const result: string[] = [];
+    let currentSentence = "";
+    const MIN_SENTENCE_LENGTH = 30;
+
+    for (const sentence of sentences) {
+      if ((currentSentence + sentence).length < MIN_SENTENCE_LENGTH) {
+        currentSentence += (currentSentence ? " " : "") + sentence;
+      } else {
+        if (currentSentence) {
+          result.push(currentSentence);
+        }
+        if (sentence.length < MIN_SENTENCE_LENGTH) {
+          currentSentence = sentence;
+        } else {
+          result.push(sentence);
+          currentSentence = "";
+        }
+      }
+    }
+
+    if (currentSentence) {
+      result.push(currentSentence);
+    }
+
+    return result;
+  }
+
   const MAX_CHARS = 2000;
   const sentences = text
     .split(/\.|\?|:|!|-/)
