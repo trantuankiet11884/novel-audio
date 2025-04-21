@@ -77,7 +77,7 @@ export default function TextAudioPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState("google");
   const [playbackRate, setPlaybackRate] = useState("1");
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const sentenceRefs = useRef<HTMLSpanElement[]>([]);
@@ -86,6 +86,10 @@ export default function TextAudioPlayer({
   // Fetch chapter text and audio
   useEffect(() => {
     const fetchChapterContent = async () => {
+      // Stop any currently playing audio
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause();
+      }
       setIsLoading(true);
       setIsPlaying(false); // Pause playback while fetching
       setCurrentTime(0);
@@ -215,6 +219,10 @@ export default function TextAudioPlayer({
   // Previous chapter
   const handlePrevChapter = () => {
     if (chapterIndex > 0) {
+      if (audioRef.current) {
+        audioRef.current.pause(); // Pause current audio
+        setIsPlaying(false);
+      }
       shouldAutoPlay.current = true; // Enable auto-play for new chapter
       onChapterChange(chapterIndex - 1);
     }
@@ -223,6 +231,10 @@ export default function TextAudioPlayer({
   // Next chapter
   const handleNextChapter = () => {
     if (chapterIndex < totalChapters - 1) {
+      if (audioRef.current) {
+        audioRef.current.pause(); // Pause current audio
+        setIsPlaying(false);
+      }
       shouldAutoPlay.current = true; // Enable auto-play for new chapter
       onChapterChange(chapterIndex + 1);
     }
