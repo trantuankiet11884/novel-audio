@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { fetchGenres } from "@/lib/apis/api";
 import { BookOpen } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface SearchClientProps {
   initialGenres: string[];
@@ -55,6 +55,22 @@ export function SearchClient({
     initialChapters || searchParams.get("chapters") || ""
   );
 
+  // Sync state with URL params when they change
+  useEffect(() => {
+    setKeyword(searchParams.get("keyword") || initialKeyword || "");
+    setSelectedGenre(searchParams.get("genre") || initialGenre || "");
+    setSort(searchParams.get("sort") || initialSort || "views");
+    setStatus(searchParams.get("status") || initialStatus || "");
+    setMinChapters(searchParams.get("chapters") || initialChapters || "");
+  }, [
+    searchParams,
+    initialKeyword,
+    initialGenre,
+    initialSort,
+    initialStatus,
+    initialChapters,
+  ]);
+
   useEffect(() => {
     // Only fetch genres if we don't have them from server
     if (initialGenres.length === 0) {
@@ -66,7 +82,7 @@ export function SearchClient({
     }
   }, [initialGenres]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
     if (keyword) params.set("keyword", keyword);
     if (selectedGenre && selectedGenre !== "all")
@@ -75,17 +91,27 @@ export function SearchClient({
     if (status) params.set("status", status);
     if (minChapters) params.set("chapters", minChapters);
 
+    // Reset to page 1 when changing filters
     router.push(`/search?${params.toString()}`);
-  };
+  }, [keyword, selectedGenre, sort, status, minChapters, router]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setKeyword("");
     setSelectedGenre("all");
     setSort("views");
     setStatus("");
     setMinChapters("");
     router.push("/search");
-  };
+  }, [router]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSearch();
+      }
+    },
+    [handleSearch]
+  );
 
   return (
     <div className="flex flex-col gap-6 p-6 bg-white dark:bg-gray-950 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
@@ -105,13 +131,14 @@ export function SearchClient({
             placeholder="Search for novel title, author..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
 
         <div className="space-y-2 w-full">
           <Label htmlFor="genre">Genre</Label>
           <Select
-            value={selectedGenre || "fantasy"}
+            value={selectedGenre || "all"}
             onValueChange={setSelectedGenre}
           >
             <SelectTrigger className="w-full" id="genre">

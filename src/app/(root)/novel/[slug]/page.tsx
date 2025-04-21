@@ -15,11 +15,30 @@ import Image from "next/image";
 import Link from "next/link";
 import HeroSectionNovel from "@/components/novel/hero-section-novel";
 import RelatedNovels from "@/components/novel/related-novels";
+import { cache } from "react";
 
 interface NovelPageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ source?: string; page?: string }>;
 }
+
+// Cache the novel data fetching to prevent redundant calls
+const getNovelBySlug = cache(async (slug: string, source?: string) => {
+  return fetchNovelBySlug(slug, source);
+});
+
+// Cache the chapters fetching to prevent redundant calls
+const getChapters = cache(async (novelId: string) => {
+  return fetchChapters(novelId);
+});
+
+// Cache similar novels fetching to prevent redundant calls
+const getSimilarNovels = cache(async (author: string) => {
+  return fetchNovels({
+    author: author || "",
+    limit: 10,
+  });
+});
 
 export async function generateMetadata({
   params,
@@ -27,7 +46,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const resolvedParams = (await params).slug;
-  const { novel } = await fetchNovelBySlug(resolvedParams);
+  const { novel } = await getNovelBySlug(resolvedParams);
 
   if (!novel) {
     return {
@@ -70,11 +89,8 @@ export default async function NovelPage({
   const resolvedParams = (await params).slug;
   const { source, page } = await searchParams;
 
-  const { novel, sources } = await fetchNovelBySlug(resolvedParams, source);
-  const { novels: sameNovels } = await fetchNovels({
-    author: novel?.author || "",
-    limit: 10,
-  });
+  const { novel, sources } = await getNovelBySlug(resolvedParams, source);
+
   if (!novel) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex flex-col items-center justify-center px-4 py-16">
@@ -101,37 +117,46 @@ export default async function NovelPage({
       </div>
     );
   }
-  const chapters = await fetchChapters(novel._id);
+
+  // Fetch chapters and sameNovels in parallel
+  const [chapters, { novels: sameNovels }] = await Promise.all([
+    getChapters(novel._id),
+    getSimilarNovels(novel.author),
+  ]);
+
   const initialChapterIndex = Number(page) || 0;
-  console.log(chapters);
+
+  // Prepare the JSON-LD schema once to prevent regeneration on each render
+  const jsonLdSchema = {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    name: novel.title,
+    author: {
+      "@type": "Person",
+      name: novel.author,
+    },
+    description: novel.description,
+    genre: novel.genres,
+    publisher: {
+      "@type": "Organization",
+      name: config.title,
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: novel.rating.toFixed(1),
+      bestRating: "5",
+      ratingCount: "100",
+    },
+    url: `${config.siteUrl}/novel/${resolvedParams}`,
+    image: novel.cover || novel.thumb || fallbackImage,
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Book",
-            name: novel.title,
-            author: {
-              "@type": "Person",
-              name: novel.author,
-            },
-            description: novel.description,
-            genre: novel.genres,
-            publisher: {
-              "@type": "Organization",
-              name: config.title,
-            },
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: novel.rating.toFixed(1),
-              bestRating: "5",
-              ratingCount: "100",
-            },
-            url: `${config.siteUrl}/novel/${resolvedParams}`,
-            image: novel.cover || novel.thumb || fallbackImage,
-          }),
+          __html: JSON.stringify(jsonLdSchema),
         }}
       />
       <div className="min-h-screen bg-white dark:bg-black">

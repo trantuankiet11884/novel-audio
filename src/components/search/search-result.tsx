@@ -37,7 +37,7 @@ export function SearchResults({
   const pathname = usePathname();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(initialResults.length === 0);
+  const [loading, setLoading] = useState(false);
   const [novels, setNovels] = useState<Novel[]>(initialResults);
   const [pagination, setPagination] = useState({
     total: initialTotal,
@@ -47,7 +47,7 @@ export function SearchResults({
     totalPages: initialTotalPages,
   });
   const [goToPage, setGoToPage] = useState("");
-  console.log(novels);
+
   // Get search params
   const keyword = searchParams.get("keyword") || "";
   const genre = searchParams.get("genre") || "";
@@ -56,20 +56,34 @@ export function SearchResults({
   const chapters = searchParams.get("chapters") || "";
   const page = searchParams.get("page")
     ? parseInt(searchParams.get("page")!)
-    : initialPage;
+    : 1;
+
+  // Use useEffect to reset the novels state whenever the search params change
+  useEffect(() => {
+    // Reset novels and set loading when search params change (except page)
+    const currentParams = new URLSearchParams(searchParams.toString());
+    currentParams.delete("page");
+
+    if (page === 1 && initialResults.length > 0) {
+      // If we're on page 1 and have initial results, use them
+      setNovels(initialResults);
+      setPagination({
+        total: initialTotal,
+        page: initialPage,
+        hasNext: initialHasNext,
+        hasPrev: initialHasPrev,
+        totalPages: initialTotalPages,
+      });
+      setLoading(false);
+    } else {
+      // For other pages or when we don't have initial results, start loading
+      setLoading(true);
+    }
+  }, [keyword, genre, sort, status, chapters]);
 
   const fetchSearchResults = useCallback(async () => {
-    // Skip fetch if we already have data from the server for this page
-    if (
-      initialResults.length > 0 &&
-      page === initialPage &&
-      novels.length > 0 &&
-      !loading
-    ) {
-      return;
-    }
+    if (!loading) return;
 
-    setLoading(true);
     try {
       const limit = 18;
       const skip = (page - 1) * limit;
@@ -98,22 +112,16 @@ export function SearchResults({
     } finally {
       setLoading(false);
     }
-  }, [
-    keyword,
-    genre,
-    sort,
-    status,
-    chapters,
-    page,
-    initialResults,
-    initialPage,
-    novels.length,
-    loading,
-  ]);
+  }, [keyword, genre, sort, status, chapters, page, loading]);
 
   useEffect(() => {
     fetchSearchResults();
   }, [fetchSearchResults]);
+
+  // Effect to set loading state when page changes
+  useEffect(() => {
+    setLoading(true);
+  }, [page]);
 
   // Function to update URL without navigation
   const createQueryString = useCallback(

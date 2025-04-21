@@ -77,19 +77,21 @@ export default function TextAudioPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState("google");
   const [playbackRate, setPlaybackRate] = useState("1");
-  const [chapterText, setChapterText] = useState("");
-  const [chapterSentences, setChapterSentences] = useState<string[]>([]);
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const sentenceRefs = useRef<HTMLSpanElement[]>([]);
-  const textContainerRef = useRef<HTMLDivElement>(null);
+  const shouldAutoPlay = useRef<boolean>(true); // Track if auto-play is needed
 
   // Fetch chapter text and audio
   useEffect(() => {
     const fetchChapterContent = async () => {
       setIsLoading(true);
+      setIsPlaying(false); // Pause playback while fetching
+      setCurrentTime(0);
+      setDuration(0);
+      setAudioSrc(""); // Clear previous audio
+
       try {
         const chapterData = await getChapterText(novelId, chapterIndex);
         if (chapterData.err) {
@@ -99,14 +101,9 @@ export default function TextAudioPlayer({
         }
 
         const cleanedText = cleanText(chapterData.text);
-        setChapterText(cleanedText);
-
-        // Split text into sentences for highlighting
         const sentences = splitText(cleanedText, true);
-        setChapterSentences(sentences);
         sentenceRefs.current = sentences.map(() => null) as any;
 
-        // Get audio for the first segment
         const textSegments = splitText(cleanedText);
         if (textSegments.length > 0) {
           const base64Audio = await getBase64Bin(
@@ -127,13 +124,21 @@ export default function TextAudioPlayer({
     };
 
     fetchChapterContent();
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-    setCurrentSentenceIndex(0);
   }, [novelId, chapterIndex, selectedVoice]);
 
-  // Điều chỉnh để cải thiện việc highlight text
+  // Auto-play when audio source is ready
+  useEffect(() => {
+    if (audioSrc && !isLoading && audioRef.current && shouldAutoPlay.current) {
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((err) => console.error("Auto-play error:", err));
+    }
+  }, [audioSrc, isLoading]);
+
+  // Handle time update for progress and history
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     if (!audioRef.current) return;
 
@@ -143,56 +148,12 @@ export default function TextAudioPlayer({
     setCurrentTime(currentTime);
     setDuration(duration);
 
-    // Thay đổi phương pháp tính toán vị trí câu hiện tại
-    const estimatedWordsPerMinute = 150; // Tốc độ đọc trung bình
-    const playbackSpeedFactor = parseFloat(playbackRate);
-    const wordsPerSecond = (estimatedWordsPerMinute / 60) * playbackSpeedFactor;
-
-    // Tính toán số từ đã đọc dựa vào thời gian hiện tại
-    const estimatedWordsRead = currentTime * wordsPerSecond;
-
-    // Tìm câu hiện tại dựa trên số từ đã đọc
-    let wordCount = 0;
-    let newSentenceIndex = 0;
-
-    for (let i = 0; i < chapterSentences.length; i++) {
-      const sentenceWordCount = countWords(chapterSentences[i]);
-      wordCount += sentenceWordCount;
-
-      if (wordCount > estimatedWordsRead) {
-        newSentenceIndex = i;
-        break;
-      }
-
-      if (i === chapterSentences.length - 1) {
-        newSentenceIndex = i;
-      }
-    }
-
-    if (newSentenceIndex !== currentSentenceIndex) {
-      setCurrentSentenceIndex(newSentenceIndex);
-
-      // Scroll câu được highlight vào tầm nhìn
-      if (sentenceRefs.current[newSentenceIndex] && textContainerRef.current) {
-        sentenceRefs.current[newSentenceIndex].scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }
-
-    // Lưu tiến trình đọc định kỳ
     if (Math.floor(currentTime) % 30 === 0 && currentTime > 0) {
       const userId = auth.currentUser?.uid;
       if (userId) {
         addToHistory(userId, novel, currentTime / duration, chapterIndex + 1);
       }
     }
-  };
-
-  // Thêm hàm đếm số từ trong một chuỗi
-  const countWords = (text: string): number => {
-    return text.trim().split(/\s+/).length;
   };
 
   // Format time display (mm:ss)
@@ -209,10 +170,14 @@ export default function TextAudioPlayer({
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      shouldAutoPlay.current = false; // Disable auto-play if manually paused
     } else {
       audioRef.current
         .play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true);
+          shouldAutoPlay.current = true; // Re-enable auto-play
+        })
         .catch((err) => console.error("Playback error:", err));
     }
   };
@@ -223,32 +188,6 @@ export default function TextAudioPlayer({
       const newTime = value[0];
       audioRef.current.currentTime = newTime;
       setCurrentTime(newTime);
-
-      // Sử dụng cùng logic để xác định câu hiện tại
-      const estimatedWordsPerMinute = 150;
-      const playbackSpeedFactor = parseFloat(playbackRate);
-      const wordsPerSecond =
-        (estimatedWordsPerMinute / 60) * playbackSpeedFactor;
-      const estimatedWordsRead = newTime * wordsPerSecond;
-
-      let wordCount = 0;
-      let newSentenceIndex = 0;
-
-      for (let i = 0; i < chapterSentences.length; i++) {
-        const sentenceWordCount = countWords(chapterSentences[i]);
-        wordCount += sentenceWordCount;
-
-        if (wordCount > estimatedWordsRead) {
-          newSentenceIndex = i;
-          break;
-        }
-
-        if (i === chapterSentences.length - 1) {
-          newSentenceIndex = i;
-        }
-      }
-
-      setCurrentSentenceIndex(newSentenceIndex);
     }
   };
 
@@ -276,6 +215,7 @@ export default function TextAudioPlayer({
   // Previous chapter
   const handlePrevChapter = () => {
     if (chapterIndex > 0) {
+      shouldAutoPlay.current = true; // Enable auto-play for new chapter
       onChapterChange(chapterIndex - 1);
     }
   };
@@ -283,6 +223,7 @@ export default function TextAudioPlayer({
   // Next chapter
   const handleNextChapter = () => {
     if (chapterIndex < totalChapters - 1) {
+      shouldAutoPlay.current = true; // Enable auto-play for new chapter
       onChapterChange(chapterIndex + 1);
     }
   };
@@ -293,6 +234,7 @@ export default function TextAudioPlayer({
     if (audioRef.current && isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      shouldAutoPlay.current = true; // Auto-play after voice change
     }
   };
 
@@ -307,7 +249,11 @@ export default function TextAudioPlayer({
   // Handle chapter completion
   const handleComplete = () => {
     if (chapterIndex < totalChapters - 1) {
+      shouldAutoPlay.current = true; // Enable auto-play for next chapter
       onChapterChange(chapterIndex + 1);
+    } else {
+      setIsPlaying(false);
+      shouldAutoPlay.current = false; // Stop if last chapter
     }
 
     const userId = auth.currentUser?.uid;
@@ -330,41 +276,9 @@ export default function TextAudioPlayer({
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleTimeUpdate}
         onEnded={handleComplete}
+        preload="auto" // Preload audio for smoother playback
         className="hidden"
       />
-
-      {/* Text display area with highlighting */}
-      <Card className="p-6 h-[calc(100vh-300px)] overflow-y-auto bg-white dark:bg-gray-900 shadow-md">
-        <div
-          ref={textContainerRef}
-          className="prose dark:prose-invert max-w-none text-lg leading-relaxed"
-        >
-          {isLoading ? (
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-full"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-5/6"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-4/5"></div>
-            </div>
-          ) : (
-            chapterSentences.map((sentence, index) => (
-              <span
-                key={index}
-                ref={(el) => {
-                  sentenceRefs.current[index] = el as HTMLSpanElement;
-                }}
-                className={`transition-colors duration-300 ${
-                  index === currentSentenceIndex
-                    ? "bg-yellow-200 dark:bg-yellow-900"
-                    : ""
-                }`}
-              >
-                {sentence}{" "}
-              </span>
-            ))
-          )}
-        </div>
-      </Card>
 
       {/* Fixed bottom audio player */}
       <div

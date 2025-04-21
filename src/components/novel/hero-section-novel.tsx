@@ -93,13 +93,13 @@ const HeroSectionNovel = ({ novel }: HeroSectionNovelProps) => {
               <BookOpen className="mr-2 h-5 w-5" /> Latest Chapter
             </Button>
 
-            <Link href={`/novel/${novel.slug}/read`}>
+            {/* <Link href={`/novel/${novel.slug}/read`}>
               <Button size="lg" variant="outline">
                 Listen and Read
               </Button>
-            </Link>
+            </Link> */}
 
-            <NovelBookmarkButton novelId={novel._id} />
+            {/* <NovelBookmarkButton novelId={novel._id} /> */}
           </div>
         </div>
       </div>

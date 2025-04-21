@@ -2,10 +2,11 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import AudioPlayer from "@/components/audio/audio-player";
-import AudioPlayerSkeleton from "@/components/audio/audio-player-skeletion";
 import ChapterList from "@/components/novel/chapter-list";
 import { Chapter, Novel } from "@/lib/apis/api";
+import TextAudioPlayer from "../audio/text-audio-player";
+import Link from "next/link";
+import { Button } from "../ui/button";
 
 interface NovelPageClientProps {
   novelId: string;
@@ -59,32 +60,9 @@ export default function NovelPageClient({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
-      {/* Audio Player */}
-      <div className="lg:col-span-2 lg:sticky lg:top-12 lg:self-start">
-        <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black h-full rounded-lg">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <h2 className="flex items-center text-lg font-semibold">
-              <span className="mr-2">🎵</span> Audio Player
-            </h2>
-          </div>
-          <div className="hidden md:block p-6">
-            <Suspense fallback={<AudioPlayerSkeleton />}>
-              <AudioPlayer
-                novels={novels}
-                novelId={novelId}
-                chapterIndex={currentChapterIndex}
-                totalChapters={chapters.length}
-                novelSlug={novelSlug}
-                onChapterChange={handleChapterChange}
-              />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full gap-6 relative">
       {/* Chapter List */}
-      <div className="lg:col-span-1">
+      <div className="w-full">
         <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black h-full rounded-lg">
           <div className="p-6 border-b border-gray-200 dark:border-gray-800">
             <h2 className="flex items-center text-lg font-semibold">
@@ -102,28 +80,16 @@ export default function NovelPageClient({
               onChapterSelect={handleChapterChange}
             />
           </div>
+          <TextAudioPlayer
+            novel={novels}
+            novelId={novelId}
+            chapterIndex={currentChapterIndex}
+            totalChapters={chapters.length}
+            novelSlug={novelSlug}
+            onChapterChange={handleChapterChange}
+          />
         </div>
       </div>
-
-      {/* Fixed Mobile Audio Player */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 shadow-lg">
-        <div className="container mx-auto">
-          <Suspense fallback={<AudioPlayerSkeleton isMobileView={true} />}>
-            <AudioPlayer
-              novelId={novelId}
-              chapterIndex={currentChapterIndex}
-              totalChapters={chapters.length}
-              novelSlug={novelSlug}
-              onChapterChange={handleChapterChange}
-              isMobileView={true}
-              novels={novels}
-            />
-          </Suspense>
-        </div>
-      </div>
-
-      {/* Add extra padding for mobile */}
-      <div className="lg:hidden h-24"></div>
     </div>
   );
 }

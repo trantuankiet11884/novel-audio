@@ -39,6 +39,19 @@ import AudioPlayerSkeleton from "./audio-player-skeletion";
 const SKIP_TIME = 10;
 const COUNTDOWN_DURATION = 120;
 
+// Cache for storing chapter text and audio data
+const apiCache = {
+  chapterText: new Map(),
+  audioData: new Map(),
+};
+
+// Function to generate cache keys
+const getCacheKey = (novelId: string, chapterIndex: number) =>
+  `${novelId}-${chapterIndex}`;
+
+const getCacheKeyAudio = (text: string, voice: string) =>
+  `${text.substring(0, 50)}-${voice}`;
+
 const VOICE_OPTIONS = [
   { id: "google", name: "Google" },
   { id: "en-US-ChristopherNeural", name: "Christopher (Microsoft)" },
@@ -107,21 +120,50 @@ export default React.memo(
       const fetchAudio = async () => {
         setIsLoading(true);
         try {
-          const chapterData = await getChapterText(novelId, chapterIndex);
-          if (chapterData.err) {
-            console.error("Failed to get chapter text");
-            setIsLoading(false);
-            return;
+          // Generate cache key for chapter text
+          const cacheKey = getCacheKey(novelId, chapterIndex);
+
+          // Try to get chapter text from cache
+          let chapterData;
+          if (apiCache.chapterText.has(cacheKey)) {
+            chapterData = apiCache.chapterText.get(cacheKey);
+            // Using cached chapter text
+          } else {
+            // If not in cache, fetch from API
+            chapterData = await getChapterText(novelId, chapterIndex);
+            if (chapterData.err) {
+              console.error("Failed to get chapter text");
+              setIsLoading(false);
+              return;
+            }
+            // Store in cache
+            apiCache.chapterText.set(cacheKey, chapterData);
           }
 
           const cleanedText = cleanText(chapterData.text);
           const textSegments = splitText(cleanedText);
 
           if (textSegments.length > 0) {
-            const base64Audio = await getBase64Bin(
+            // Generate cache key for audio data
+            const audioCacheKey = getCacheKeyAudio(
               textSegments[0],
               selectedVoice
             );
+
+            // Try to get audio data from cache
+            let base64Audio;
+            if (apiCache.audioData.has(audioCacheKey)) {
+              base64Audio = apiCache.audioData.get(audioCacheKey);
+              // Using cached audio data
+            } else {
+              // If not in cache, fetch from API
+              base64Audio = await getBase64Bin(textSegments[0], selectedVoice);
+              // Store in cache
+              if (base64Audio) {
+                apiCache.audioData.set(audioCacheKey, base64Audio);
+              }
+            }
+
             if (base64Audio) {
               setAudioSrc(`data:audio/mp3;base64,${base64Audio}`);
             } else {
@@ -256,6 +298,8 @@ export default React.memo(
     };
 
     const handleVoiceChange = (value: string) => {
+      // Clear audio cache when voice changes
+      apiCache.audioData.clear();
       setSelectedVoice(value);
       if (audioRef.current && isPlaying) {
         audioRef.current.pause();

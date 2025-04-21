@@ -65,11 +65,8 @@ export default function ProfileTabs({
   };
 
   return (
-    <Tabs defaultValue="activity" className="w-full">
-      <TabsList
-        className="grid w-full grid-cols-3 mb-6"
-        defaultValue="settings"
-      >
+    <Tabs defaultValue="settings" className="w-full">
+      <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
         <TabsTrigger value="billing">Billing</TabsTrigger>
@@ -317,7 +314,7 @@ export default function ProfileTabs({
             </div>
 
             {user.removeads === false && !hasCancelled && (
-              <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Link href="/pro-plan">
                   <Button variant="outline" className="w-full">
                     Change Plan
@@ -342,7 +339,7 @@ export default function ProfileTabs({
                     </DialogHeader>
                     <div className="py-4">
                       <div className="space-y-4">
-                        <div className="border rounded-lg p-4 bg-gray-50">
+                        <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                           <h4 className="font-medium text-sm">
                             What happens when you cancel:
                           </h4>
