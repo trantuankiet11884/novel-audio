@@ -24,6 +24,7 @@ export function NovelCard({ novel, variant = "default" }: NovelCardProps) {
       <Link
         href={`/novel/${novel.slug}`}
         className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        prefetch={false}
       >
         <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md shadow-sm">
           <Image

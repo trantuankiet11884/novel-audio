@@ -17,30 +17,54 @@ import { BookOpen } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export function SearchClient() {
+interface SearchClientProps {
+  initialGenres: string[];
+  initialKeyword: string;
+  initialGenre: string;
+  initialSort: string;
+  initialStatus: string;
+  initialChapters: string;
+}
+
+export function SearchClient({
+  initialGenres = [],
+  initialKeyword = "",
+  initialGenre = "",
+  initialSort = "views",
+  initialStatus = "",
+  initialChapters = "",
+}: SearchClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [genres, setGenres] = useState<string[]>([]);
+  const [genres, setGenres] = useState<string[]>(initialGenres);
 
   // Get values from URL params or set defaults
-  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
-  const [selectedGenre, setSelectedGenre] = useState(
-    searchParams.get("genre") || ""
+  const [keyword, setKeyword] = useState(
+    initialKeyword || searchParams.get("keyword") || ""
   );
-  const [sort, setSort] = useState(searchParams.get("sort") || "views");
-  const [status, setStatus] = useState(searchParams.get("status") || "");
+  const [selectedGenre, setSelectedGenre] = useState(
+    initialGenre || searchParams.get("genre") || ""
+  );
+  const [sort, setSort] = useState(
+    initialSort || searchParams.get("sort") || "views"
+  );
+  const [status, setStatus] = useState(
+    initialStatus || searchParams.get("status") || ""
+  );
   const [minChapters, setMinChapters] = useState(
-    searchParams.get("chapters") || ""
+    initialChapters || searchParams.get("chapters") || ""
   );
 
   useEffect(() => {
-    const loadGenres = async () => {
-      const { genres: fetchedGenres } = await fetchGenres({ limit: 100 });
-      setGenres(fetchedGenres);
-    };
-
-    loadGenres();
-  }, []);
+    // Only fetch genres if we don't have them from server
+    if (initialGenres.length === 0) {
+      const loadGenres = async () => {
+        const { genres: fetchedGenres } = await fetchGenres({ limit: 100 });
+        setGenres(fetchedGenres);
+      };
+      loadGenres();
+    }
+  }, [initialGenres]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();

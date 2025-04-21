@@ -127,11 +127,21 @@ export function ClientSearch({ genres }: { genres: string[] }) {
   );
 }
 
-export function ClientGenrePage({ genres }: { genres: string[] }) {
-  const [selectedGenre, setSelectedGenre] = useState<string>(genres[0] || "");
-  const [novels, setNovels] = useState([]);
+export function ClientGenrePage({
+  genres,
+  initialGenre,
+  initialNovels,
+  initialTotal,
+}: {
+  genres: string[];
+  initialGenre: string;
+  initialNovels: any[];
+  initialTotal: number;
+}) {
+  const [selectedGenre, setSelectedGenre] = useState<string>(initialGenre);
+  const [novels, setNovels] = useState(initialNovels);
   const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("views");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -205,6 +215,17 @@ export function ClientGenrePage({ genres }: { genres: string[] }) {
 
   useEffect(() => {
     async function loadNovels() {
+      // Don't fetch if we're on page 1 with initial data already loaded
+      if (
+        selectedGenre === initialGenre &&
+        page === 1 &&
+        sort === "views" &&
+        novels.length > 0 &&
+        !loading
+      ) {
+        return;
+      }
+
       if (!selectedGenre) return;
 
       setLoading(true);
@@ -225,7 +246,7 @@ export function ClientGenrePage({ genres }: { genres: string[] }) {
     }
 
     loadNovels();
-  }, [selectedGenre, page, sort]);
+  }, [selectedGenre, page, sort, initialGenre, initialNovels.length]);
 
   const totalPages = Math.ceil(total / limit);
 

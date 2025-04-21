@@ -16,19 +16,35 @@ import { useCallback, useEffect, useState } from "react";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import { NovelCard } from "../audio/novel-card";
 
-export function SearchResults() {
+interface SearchResultsProps {
+  initialResults: Novel[];
+  initialTotal: number;
+  initialHasNext: boolean;
+  initialHasPrev: boolean;
+  initialTotalPages: number;
+  initialPage: number;
+}
+
+export function SearchResults({
+  initialResults = [],
+  initialTotal = 0,
+  initialHasNext = false,
+  initialHasPrev = false,
+  initialTotalPages = 0,
+  initialPage = 1,
+}: SearchResultsProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(true);
-  const [novels, setNovels] = useState<Novel[]>([]);
+  const [loading, setLoading] = useState(initialResults.length === 0);
+  const [novels, setNovels] = useState<Novel[]>(initialResults);
   const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    hasNext: false,
-    hasPrev: false,
-    totalPages: 0,
+    total: initialTotal,
+    page: initialPage,
+    hasNext: initialHasNext,
+    hasPrev: initialHasPrev,
+    totalPages: initialTotalPages,
   });
   const [goToPage, setGoToPage] = useState("");
 
@@ -40,9 +56,19 @@ export function SearchResults() {
   const chapters = searchParams.get("chapters") || "";
   const page = searchParams.get("page")
     ? parseInt(searchParams.get("page")!)
-    : 1;
+    : initialPage;
 
   const fetchSearchResults = useCallback(async () => {
+    // Skip fetch if we already have data from the server for this page
+    if (
+      initialResults.length > 0 &&
+      page === initialPage &&
+      novels.length > 0 &&
+      !loading
+    ) {
+      return;
+    }
+
     setLoading(true);
     try {
       const limit = 18;
@@ -72,7 +98,18 @@ export function SearchResults() {
     } finally {
       setLoading(false);
     }
-  }, [keyword, genre, sort, status, chapters, page]);
+  }, [
+    keyword,
+    genre,
+    sort,
+    status,
+    chapters,
+    page,
+    initialResults,
+    initialPage,
+    novels.length,
+    loading,
+  ]);
 
   useEffect(() => {
     fetchSearchResults();

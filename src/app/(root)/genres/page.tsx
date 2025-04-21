@@ -1,7 +1,9 @@
-import { ClientSearch } from "@/components/genres/genres-client";
-import { fetchGenres } from "@/lib/apis/api";
+import {
+  ClientSearch,
+  ClientGenrePage,
+} from "@/components/genres/genres-client";
+import { fetchGenres, fetchNovels } from "@/lib/apis/api";
 import { Suspense } from "react";
-import { ClientGenrePage } from "@/components/genres/genres-client";
 import { Metadata } from "next";
 import config from "@/config/data";
 
@@ -30,6 +32,12 @@ export const metadata: Metadata = {
 
 export default async function GenresPage() {
   const { genres, total } = await fetchGenres({ limit: 100 });
+
+  // Pre-fetch data for the first genre to improve SEO
+  const firstGenre = genres[0] || "";
+  const initialNovelsData = firstGenre
+    ? await fetchNovels({ genre: firstGenre, sort: "views", skip: 0 })
+    : { novels: [], total: 0 };
 
   return (
     <>
@@ -102,7 +110,12 @@ export default async function GenresPage() {
                 </a>
               </div>
             ) : (
-              <ClientGenrePage genres={genres} />
+              <ClientGenrePage
+                genres={genres}
+                initialGenre={firstGenre}
+                initialNovels={initialNovelsData.novels || []}
+                initialTotal={initialNovelsData.total}
+              />
             )}
           </Suspense>
         </div>

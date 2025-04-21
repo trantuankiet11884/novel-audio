@@ -3,6 +3,7 @@ import { SearchResults } from "@/components/search/search-result";
 import { Suspense } from "react";
 import { Metadata } from "next";
 import config from "@/config/data";
+import { fetchGenres, fetchNovels } from "@/lib/apis/api";
 
 export const metadata: Metadata = {
   title: "Search Novels | MTL Novel Audio",
@@ -27,8 +28,50 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function SearchPage() {
+// Define type for search params
+type SearchParamsType = { [key: string]: string | string[] | undefined };
+
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsType>;
+}) {
+  // Resolve search params (always a Promise in dynamic pages)
+  const resolvedParams = await searchParams;
+
+  // Extract search parameters from resolved params
+  const keyword =
+    typeof resolvedParams.keyword === "string" ? resolvedParams.keyword : "";
+  const genre =
+    typeof resolvedParams.genre === "string" ? resolvedParams.genre : "";
+  const status =
+    typeof resolvedParams.status === "string" ? resolvedParams.status : "";
+  const sort =
+    typeof resolvedParams.sort === "string" ? resolvedParams.sort : "views";
+  const chapters =
+    typeof resolvedParams.chapters === "string" ? resolvedParams.chapters : "";
+  const page =
+    typeof resolvedParams.page === "string" ? parseInt(resolvedParams.page) : 1;
+
+  // Pre-fetch data for initial server-side rendering
+  const { genres } = await fetchGenres({ limit: 100 });
+
+  // Fetch initial search results on the server
+  const limit = 18;
+  const skip = (page - 1) * limit;
+  const initialSearchResults = await fetchNovels({
+    keyword,
+    genre: genre === "all" ? "" : genre,
+    sort,
+    status,
+    chapters,
+    limit,
+    skip,
+    page,
+  });
+
   return (
+    // ... rest of your JSX remains unchanged
     <>
       <script
         type="application/ld+json"
@@ -70,6 +113,37 @@ export default function SearchPage() {
           }),
         }}
       />
+
+      {initialSearchResults.novels &&
+        initialSearchResults.novels.length > 0 && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                itemListElement: initialSearchResults.novels.map(
+                  (novel: any, index: number) => ({
+                    "@type": "ListItem",
+                    position: index + 1,
+                    item: {
+                      "@type": "Book",
+                      name: novel.title,
+                      author: {
+                        "@type": "Person",
+                        name: novel.author || "Unknown Author",
+                      },
+                      url: `${config.siteUrl}/novel/${novel.slug}`,
+                      numberOfPages: novel.chapters || 0,
+                      genre: novel.genres?.join(", ") || "",
+                    },
+                  })
+                ),
+              }),
+            }}
+          />
+        )}
+
       <main className="container mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Search Novels</h1>
@@ -82,14 +156,28 @@ export default function SearchPage() {
           <div className="lg:col-span-1">
             <div className="sticky top-20">
               <Suspense>
-                <SearchClient />
+                <SearchClient
+                  initialGenres={genres}
+                  initialKeyword={keyword}
+                  initialGenre={genre}
+                  initialSort={sort}
+                  initialStatus={status}
+                  initialChapters={chapters}
+                />
               </Suspense>
             </div>
           </div>
 
           <div className="lg:col-span-3">
             <Suspense>
-              <SearchResults />
+              <SearchResults
+                initialResults={initialSearchResults.novels || []}
+                initialTotal={initialSearchResults.total || 0}
+                initialHasNext={initialSearchResults.hasNext || false}
+                initialHasPrev={initialSearchResults.hasPrev || false}
+                initialTotalPages={initialSearchResults.totalPages || 0}
+                initialPage={page}
+              />
             </Suspense>
           </div>
         </div>
