@@ -71,7 +71,6 @@ export default async function SearchPage({
   });
 
   return (
-    // ... rest of your JSX remains unchanged
     <>
       <script
         type="application/ld+json"

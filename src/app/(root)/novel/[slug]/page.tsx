@@ -103,7 +103,7 @@ export default async function NovelPage({
   }
   const chapters = await fetchChapters(novel._id);
   const initialChapterIndex = Number(page) || 0;
-
+  console.log(chapters);
   return (
     <>
       <script

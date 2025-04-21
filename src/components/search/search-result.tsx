@@ -47,7 +47,7 @@ export function SearchResults({
     totalPages: initialTotalPages,
   });
   const [goToPage, setGoToPage] = useState("");
-
+  console.log(novels);
   // Get search params
   const keyword = searchParams.get("keyword") || "";
   const genre = searchParams.get("genre") || "";
