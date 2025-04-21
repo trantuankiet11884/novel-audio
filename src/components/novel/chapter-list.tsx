@@ -130,7 +130,7 @@ function ChapterList({
           value={sortOrder}
           onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
         >
-          <SelectTrigger className="md:w-full w-[140px] text-sm">
+          <SelectTrigger className="md:w-full lg:w-full w-[140px] text-sm">
             <SelectValue placeholder="Sort order" />
           </SelectTrigger>
           <SelectContent>
@@ -141,7 +141,7 @@ function ChapterList({
       </div>
 
       {/* Chapters Display */}
-      <div className="hidden md:block">
+      <div className="hidden md:block lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -181,7 +181,7 @@ function ChapterList({
       </div>
 
       {/* Mobile List View */}
-      <div className="md:hidden block space-y-2">
+      <div className="md:hidden lg:hidden block space-y-2">
         {paginatedChapters.map((chapter) => {
           const globalIndex = chapters.findIndex(
             (c) => c.slug === chapter.slug
