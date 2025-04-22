@@ -20,13 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { debounce } from "lodash";
 import { Search } from "lucide-react";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 interface Chapter {
   slug: string;
@@ -51,9 +45,8 @@ function ChapterList({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const tableRowRef = useRef<HTMLTableRowElement | null>(null); // Ref cho TableRow
-  const divRef = useRef<HTMLDivElement | null>(null); // Ref cho div
-  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const chapterListRef = useRef<HTMLDivElement>(null); // Tham chiếu đến container danh sách chương
 
   const totalPages = Math.ceil(chapters.length / CHAPTERS_PER_PAGE);
 
@@ -72,44 +65,20 @@ function ChapterList({
     return filteredChapters.slice(startIndex, startIndex + CHAPTERS_PER_PAGE);
   }, [filteredChapters, currentPage]);
 
-  const scrollToCurrentChapter = useCallback(() => {
-    const container = containerRef.current;
-    let current: HTMLTableRowElement | HTMLDivElement | null = null;
-
-    // Select the appropriate ref based on the interface
-    if (tableRowRef.current) {
-      current = tableRowRef.current;
-    } else if (divRef.current) {
-      current = divRef.current;
-    }
-
-    if (!current || !container) return;
-
-    // Check if the current chapter is in the displayed list
-    const isChapterInView = paginatedChapters.some(
-      (chapter) => chapter.slug === chapters[currentChapterIndex]?.slug
-    );
-
-    if (!isChapterInView) return;
-
-    // Calculate the scroll position
-    const containerRect = container.getBoundingClientRect();
-    const currentRect = current.getBoundingClientRect();
-    const scrollTop = container.scrollTop;
-    const offsetTop = currentRect.top - containerRect.top + scrollTop;
-
-    // Scroll to the calculated position
-    requestAnimationFrame(() => {
-      container.scrollTo({
-        top: offsetTop,
-        behavior: "smooth",
-      });
-    });
-  }, [currentChapterIndex, paginatedChapters, chapters]);
-
+  // Cuộn đến chương hiện tại
   useEffect(() => {
-    scrollToCurrentChapter();
-  }, [scrollToCurrentChapter]);
+    if (chapterListRef.current && currentChapterIndex >= 0) {
+      const currentChapterElement = chapterListRef.current.querySelector(
+        `[data-chapter-index="${currentChapterIndex}"]`
+      ) as HTMLElement;
+      if (currentChapterElement) {
+        currentChapterElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center", // Đặt chương hiện tại ở giữa khung nhìn
+        });
+      }
+    }
+  }, [currentChapterIndex, paginatedChapters]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -150,6 +119,7 @@ function ChapterList({
 
   return (
     <div className="space-y-4">
+      {/* Search and Sort Controls */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -173,8 +143,9 @@ function ChapterList({
         </Select>
       </div>
 
+      {/* Chapters Display */}
       <div
-        ref={containerRef}
+        ref={chapterListRef}
         className="max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent rounded-lg border border-gray-200 dark:border-gray-800"
       >
         {/* Desktop Table View */}
@@ -199,7 +170,7 @@ function ChapterList({
                 return (
                   <TableRow
                     key={chapter.slug}
-                    ref={isCurrent ? tableRowRef : null}
+                    data-chapter-index={globalIndex} // Thêm thuộc tính để xác định phần tử
                     className={cn(
                       "transition-colors cursor-pointer text-sm",
                       isCurrent
@@ -231,7 +202,7 @@ function ChapterList({
             return (
               <div
                 key={chapter.slug}
-                ref={isCurrent ? divRef : null}
+                data-chapter-index={globalIndex} // Thêm thuộc tính để xác định phần tử
                 className={cn(
                   "p-4 rounded-lg border cursor-pointer transition-all duration-200",
                   isCurrent
@@ -254,6 +225,7 @@ function ChapterList({
         </div>
       </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <div className="text-xs text-gray-500">
