@@ -49,7 +49,7 @@ export default function NovelPageClient({
       currentChapterIndex.toString()
     );
 
-    const newUrl = `${pathname}?page=${currentChapterIndex}`;
+    const newUrl = `${pathname}?chapter=${currentChapterIndex + 1}`;
     router.replace(newUrl, { scroll: false });
   }, [currentChapterIndex, novelSlug, pathname, router]);
 
@@ -61,9 +61,21 @@ export default function NovelPageClient({
 
   return (
     <div className="w-full gap-6 relative">
-      {/* Chapter List */}
+      {/* Text Audio Player */}
       <div className="w-full">
-        <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black h-full rounded-lg">
+        <TextAudioPlayer
+          novel={novels}
+          novelId={novelId}
+          chapterIndex={currentChapterIndex}
+          totalChapters={chapters.length}
+          novelSlug={novelSlug}
+          onChapterChange={handleChapterChange}
+        />
+      </div>
+
+      {/* Chapter List */}
+      <div className="w-full md:max-h-[calc(100vh-2rem)]">
+        <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black rounded-lg">
           <div className="p-6 border-b border-gray-200 dark:border-gray-800">
             <h2 className="flex items-center text-lg font-semibold">
               <span className="mr-2">📖</span> Chapter List
@@ -72,7 +84,7 @@ export default function NovelPageClient({
               </span>
             </h2>
           </div>
-          <div className="p-6">
+          <div className="p-6 max-h-[calc(100vh)]">
             <ChapterList
               chapters={chapters}
               novelSlug={novelSlug}
@@ -80,14 +92,6 @@ export default function NovelPageClient({
               onChapterSelect={handleChapterChange}
             />
           </div>
-          <TextAudioPlayer
-            novel={novels}
-            novelId={novelId}
-            chapterIndex={currentChapterIndex}
-            totalChapters={chapters.length}
-            novelSlug={novelSlug}
-            onChapterChange={handleChapterChange}
-          />
         </div>
       </div>
     </div>

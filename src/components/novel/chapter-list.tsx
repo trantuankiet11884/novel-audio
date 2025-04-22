@@ -20,7 +20,13 @@ import {
 import { cn } from "@/lib/utils";
 import { debounce } from "lodash";
 import { Search } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface Chapter {
   slug: string;
@@ -34,7 +40,7 @@ interface ChapterListProps {
   onChapterSelect: (index: number) => void;
 }
 
-const CHAPTERS_PER_PAGE = 15;
+const CHAPTERS_PER_PAGE = 50;
 
 function ChapterList({
   chapters,
@@ -45,12 +51,12 @@ function ChapterList({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const currentChapterRef = useRef<HTMLTableRowElement | HTMLDivElement>(null);
+  const tableRowRef = useRef<HTMLTableRowElement | null>(null); // Ref cho TableRow
+  const divRef = useRef<HTMLDivElement | null>(null); // Ref cho div
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Calculate total pages
   const totalPages = Math.ceil(chapters.length / CHAPTERS_PER_PAGE);
 
-  // Filter and sort chapters
   const filteredChapters = useMemo(() => {
     let result = [...chapters];
     if (searchQuery) {
@@ -58,43 +64,77 @@ function ChapterList({
         chapter.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    return sortOrder === "asc" ? result : result.reverse();
+    return sortOrder === "asc" ? result : [...result].reverse();
   }, [chapters, searchQuery, sortOrder]);
 
-  // Get chapters for current page
   const paginatedChapters = useMemo(() => {
     const startIndex = (currentPage - 1) * CHAPTERS_PER_PAGE;
     return filteredChapters.slice(startIndex, startIndex + CHAPTERS_PER_PAGE);
   }, [filteredChapters, currentPage]);
 
-  // Auto-scroll to current chapter
-  useEffect(() => {
-    // Only attempt to scroll if not searching and after component has fully rendered
-    if (currentChapterRef.current && !searchQuery) {
-      // Small timeout to ensure DOM is fully updated
-      setTimeout(() => {
-        currentChapterRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 100);
+  const scrollToCurrentChapter = useCallback(() => {
+    const container = containerRef.current;
+    let current: HTMLTableRowElement | HTMLDivElement | null = null;
+
+    // Select the appropriate ref based on the interface
+    if (tableRowRef.current) {
+      current = tableRowRef.current;
+    } else if (divRef.current) {
+      current = divRef.current;
     }
-  }, [currentChapterIndex, searchQuery, currentPage]);
+
+    if (!current || !container) return;
+
+    // Check if the current chapter is in the displayed list
+    const isChapterInView = paginatedChapters.some(
+      (chapter) => chapter.slug === chapters[currentChapterIndex]?.slug
+    );
+
+    if (!isChapterInView) return;
+
+    // Calculate the scroll position
+    const containerRect = container.getBoundingClientRect();
+    const currentRect = current.getBoundingClientRect();
+    const scrollTop = container.scrollTop;
+    const offsetTop = currentRect.top - containerRect.top + scrollTop;
+
+    // Scroll to the calculated position
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: offsetTop,
+        behavior: "smooth",
+      });
+    });
+  }, [currentChapterIndex, paginatedChapters, chapters]);
 
   useEffect(() => {
-    if (searchQuery) return;
+    scrollToCurrentChapter();
+  }, [scrollToCurrentChapter]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      setCurrentPage(1);
+      return;
+    }
     if (currentChapterIndex >= 0 && currentChapterIndex < chapters.length) {
-      const targetPage =
-        Math.floor(currentChapterIndex / CHAPTERS_PER_PAGE) + 1;
-      if (targetPage !== currentPage) {
-        setCurrentPage(targetPage);
+      const chapterSlug = chapters[currentChapterIndex].slug;
+      const filteredIndex = filteredChapters.findIndex(
+        (c) => c.slug === chapterSlug
+      );
+      if (filteredIndex >= 0) {
+        const targetPage = Math.floor(filteredIndex / CHAPTERS_PER_PAGE) + 1;
+        if (targetPage !== currentPage) {
+          setCurrentPage(targetPage);
+        }
       }
     }
-  }, [currentChapterIndex, chapters.length, searchQuery]);
+  }, [currentChapterIndex, chapters, filteredChapters, searchQuery]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [totalPages, currentPage]);
 
   const handleSearch = debounce((value: string) => {
     setSearchQuery(value);
@@ -108,21 +148,14 @@ function ChapterList({
     onChapterSelect(index);
   };
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
-    }
-  }, [totalPages, currentPage]);
-
   return (
     <div className="space-y-4">
-      {/* Search and Sort Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search chapters..."
-            className="pl-8 text-sm"
+            className="pl-10 h-10 text-sm rounded-lg border-gray-300 dark:border-gray-700"
             onChange={(e) => handleSearch(e.target.value)}
           />
         </div>
@@ -130,7 +163,7 @@ function ChapterList({
           value={sortOrder}
           onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
         >
-          <SelectTrigger className="md:w-full lg:w-full w-[140px] text-sm">
+          <SelectTrigger className="h-10 text-sm rounded-lg border-gray-300 dark:border-gray-700">
             <SelectValue placeholder="Sort order" />
           </SelectTrigger>
           <SelectContent>
@@ -140,86 +173,90 @@ function ChapterList({
         </Select>
       </div>
 
-      {/* Chapters Display */}
-      <div className="hidden md:block lg:block">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Chapter</TableHead>
-              <TableHead>Title</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedChapters.map((chapter) => {
-              const globalIndex = chapters.findIndex(
-                (c) => c.slug === chapter.slug
-              );
-              const isCurrent = globalIndex === currentChapterIndex;
-              return (
-                <TableRow
-                  key={chapter.slug}
-                  ref={
-                    isCurrent
-                      ? (currentChapterRef as React.RefObject<HTMLTableRowElement>)
-                      : null
-                  }
-                  className={cn(
-                    "transition-colors cursor-pointer",
-                    isCurrent
-                      ? "bg-blue-100 dark:bg-blue-900/50 font-semibold"
-                      : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                  )}
-                  onClick={() => handleChapterClick(globalIndex)}
-                >
-                  <TableCell>{globalIndex + 1}</TableCell>
-                  <TableCell>{chapter.title}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <div
+        ref={containerRef}
+        className="max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent rounded-lg border border-gray-200 dark:border-gray-800"
+      >
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader className="sticky top-0 bg-gray-50 dark:bg-gray-900 z-10">
+              <TableRow>
+                <TableHead className="w-16 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Ch.
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Title
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedChapters.map((chapter) => {
+                const globalIndex = chapters.findIndex(
+                  (c) => c.slug === chapter.slug
+                );
+                const isCurrent = globalIndex === currentChapterIndex;
+                return (
+                  <TableRow
+                    key={chapter.slug}
+                    ref={isCurrent ? tableRowRef : null}
+                    className={cn(
+                      "transition-colors cursor-pointer text-sm",
+                      isCurrent
+                        ? "bg-blue-100 dark:bg-blue-900/50 font-semibold"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    )}
+                    onClick={() => handleChapterClick(globalIndex)}
+                  >
+                    <TableCell className="py-3 text-center">
+                      {globalIndex + 1}
+                    </TableCell>
+                    <TableCell className="py-3 truncate">
+                      {chapter.title}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
 
-      {/* Mobile List View */}
-      <div className="md:hidden lg:hidden block space-y-2">
-        {paginatedChapters.map((chapter) => {
-          const globalIndex = chapters.findIndex(
-            (c) => c.slug === chapter.slug
-          );
-          const isCurrent = globalIndex === currentChapterIndex;
-          return (
-            <div
-              key={chapter.slug}
-              ref={
-                isCurrent
-                  ? (currentChapterRef as React.RefObject<HTMLDivElement>)
-                  : null
-              }
-              className={cn(
-                "p-3 rounded-lg border cursor-pointer transition-colors",
-                isCurrent
-                  ? "bg-blue-100 dark:bg-blue-900/50 font-semibold"
-                  : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              )}
-              onClick={() => handleChapterClick(globalIndex)}
-            >
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
-                  Ch. {globalIndex + 1}
-                </span>
-                <span className="text-sm truncate flex-1 ml-2">
-                  {chapter.title}
-                </span>
+        {/* Mobile List View */}
+        <div className="md:hidden space-y-2 p-4">
+          {paginatedChapters.map((chapter) => {
+            const globalIndex = chapters.findIndex(
+              (c) => c.slug === chapter.slug
+            );
+            const isCurrent = globalIndex === currentChapterIndex;
+            return (
+              <div
+                key={chapter.slug}
+                ref={isCurrent ? divRef : null}
+                className={cn(
+                  "p-4 rounded-lg border cursor-pointer transition-all duration-200",
+                  isCurrent
+                    ? "bg-blue-100 dark:bg-blue-900/50 font-semibold border-blue-300 dark:border-blue-700"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-800/50 border-gray-200 dark:border-gray-800"
+                )}
+                onClick={() => handleChapterClick(globalIndex)}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">
+                    Ch. {globalIndex + 1} {isCurrent && "(Current)"}
+                  </span>
+                  <span className="text-sm truncate flex-1 ml-4">
+                    {chapter.title}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-500 text-center sm:text-left">
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-xs text-gray-500">
             Showing {paginatedChapters.length} of {filteredChapters.length}{" "}
             chapters
           </div>
@@ -229,19 +266,19 @@ function ChapterList({
               size="sm"
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="text-xs px-3"
+              className="text-xs h-8 px-3"
             >
-              Previous
+              Prev
             </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
+            <span className="text-xs font-medium">
+              {currentPage}/{totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="text-xs px-3"
+              className="text-xs h-8 px-3"
             >
               Next
             </Button>

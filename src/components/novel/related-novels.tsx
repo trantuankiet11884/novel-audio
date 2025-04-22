@@ -8,7 +8,7 @@ interface RelatedNovelsProps {
 
 const RelatedNovels = ({ sameNovels }: RelatedNovelsProps) => {
   return (
-    <div className="mt-8 bg-gray-50 dark:bg-gray-900 p-5 rounded border border-gray-200 dark:border-gray-800">
+    <div className="mt-32 bg-gray-50 dark:bg-gray-900 p-5 rounded border border-gray-200 dark:border-gray-800">
       <h3 className="font-semibold text-lg mb-3">
         Novels from the same author
       </h3>

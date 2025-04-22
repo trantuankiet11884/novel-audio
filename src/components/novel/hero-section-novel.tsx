@@ -59,10 +59,7 @@ const HeroSectionNovel = ({ novel }: HeroSectionNovelProps) => {
               <Tag className="mr-1 h-4 w-4" /> Genres:
             </span>
             {novel.genres.map((genre, idx) => (
-              <Link
-                href={`/genres/${encodeURIComponent(genre.toLowerCase())}`}
-                key={`${genre}-${idx}`}
-              >
+              <Link href={`/genres`} key={`${genre}-${idx}`}>
                 <Badge
                   variant="outline"
                   className="bg-gray-800 hover:bg-gray-700 text-white border-gray-700 cursor-pointer"

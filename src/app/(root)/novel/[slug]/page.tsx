@@ -181,7 +181,7 @@ export default async function NovelPage({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="chapters">
+            <TabsContent value="chapters" className="mb-4">
               <NovelPageClient
                 novels={novel}
                 novelId={novel._id}
