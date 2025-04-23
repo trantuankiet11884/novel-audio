@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { fetchGenres } from "@/lib/apis/api";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -37,6 +37,7 @@ export function SearchClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [genres, setGenres] = useState<string[]>(initialGenres);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Get values from URL params or set defaults
   const [keyword, setKeyword] = useState(
@@ -83,6 +84,8 @@ export function SearchClient({
   }, [initialGenres]);
 
   const handleSearch = useCallback(() => {
+    setIsFiltering(true);
+
     const params = new URLSearchParams();
     if (keyword) params.set("keyword", keyword);
     if (selectedGenre && selectedGenre !== "all")
@@ -93,6 +96,9 @@ export function SearchClient({
 
     // Reset to page 1 when changing filters
     router.push(`/search?${params.toString()}`);
+
+    // The filtering state will be reset by the navigational change
+    setTimeout(() => setIsFiltering(false), 1000);
   }, [keyword, selectedGenre, sort, status, minChapters, router]);
 
   const handleReset = useCallback(() => {
@@ -101,7 +107,11 @@ export function SearchClient({
     setSort("views");
     setStatus("");
     setMinChapters("");
+    setIsFiltering(true);
     router.push("/search");
+
+    // The filtering state will be reset by the navigational change
+    setTimeout(() => setIsFiltering(false), 1000);
   }, [router]);
 
   const handleKeyDown = useCallback(
@@ -194,11 +204,34 @@ export function SearchClient({
         </div>
 
         <div className="flex flex-col space-y-2 pt-4">
-          <Button className="w-full" onClick={handleSearch}>
-            Apply Filters
+          <Button
+            className="w-full"
+            onClick={handleSearch}
+            disabled={isFiltering}
+          >
+            {isFiltering ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Filtering...
+              </>
+            ) : (
+              "Apply Filters"
+            )}
           </Button>
-          <Button variant="outline" className="w-full" onClick={handleReset}>
-            Reset
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleReset}
+            disabled={isFiltering}
+          >
+            {isFiltering ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Resetting...
+              </>
+            ) : (
+              "Reset"
+            )}
           </Button>
         </div>
       </div>

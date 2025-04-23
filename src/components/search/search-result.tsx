@@ -10,7 +10,7 @@ import {
   PaginationItem,
 } from "@/components/ui/pagination";
 import { fetchNovels, Novel } from "@/lib/apis/api";
-import { BoxIcon } from "lucide-react";
+import { BoxIcon, Loader2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
@@ -58,28 +58,21 @@ export function SearchResults({
     ? parseInt(searchParams.get("page")!)
     : 1;
 
-  // Use useEffect to reset the novels state whenever the search params change
+  // Use useEffect to detect any change in search params and set loading state
   useEffect(() => {
-    // Reset novels and set loading when search params change (except page)
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.delete("page");
+    // Only set loading when filter params change, not for initial load with server data
+    const isInitialPage =
+      page === 1 &&
+      (!searchParams.has("keyword") || searchParams.get("keyword") === "") &&
+      (!searchParams.has("genre") || searchParams.get("genre") === "") &&
+      (!searchParams.has("status") || searchParams.get("status") === "") &&
+      (!searchParams.has("chapters") || searchParams.get("chapters") === "") &&
+      (!searchParams.has("sort") || searchParams.get("sort") === "views");
 
-    if (page === 1 && initialResults.length > 0) {
-      // If we're on page 1 and have initial results, use them
-      setNovels(initialResults);
-      setPagination({
-        total: initialTotal,
-        page: initialPage,
-        hasNext: initialHasNext,
-        hasPrev: initialHasPrev,
-        totalPages: initialTotalPages,
-      });
-      setLoading(false);
-    } else {
-      // For other pages or when we don't have initial results, start loading
+    if (!isInitialPage) {
       setLoading(true);
     }
-  }, [keyword, genre, sort, status, chapters]);
+  }, [keyword, genre, sort, status, chapters, page, searchParams]);
 
   const fetchSearchResults = useCallback(async () => {
     if (!loading) return;
@@ -117,11 +110,6 @@ export function SearchResults({
   useEffect(() => {
     fetchSearchResults();
   }, [fetchSearchResults]);
-
-  // Effect to set loading state when page changes
-  useEffect(() => {
-    setLoading(true);
-  }, [page]);
 
   // Function to update URL without navigation
   const createQueryString = useCallback(
@@ -162,13 +150,9 @@ export function SearchResults({
   if (loading) {
     return (
       <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <div className="h-8 w-64 bg-muted rounded animate-pulse" />
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 9 }).map((_, i) => (
-            <NovelCardSkeleton key={i} />
+            <NovelCardSkeleton key={i} variant="default" />
           ))}
         </div>
       </div>
