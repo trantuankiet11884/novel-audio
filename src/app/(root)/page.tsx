@@ -9,6 +9,7 @@ import config from "@/config/data";
 import { ContinueListeningSection } from "@/components/home/continue-listening";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Suspense } from "react";
+import { BoxIcon } from "lucide-react";
 
 // Add skeleton components
 const NovelSliderSkeleton = () => (
@@ -213,17 +214,35 @@ export default async function HomePage() {
                     <FaChevronRight className="ml-1 h-3 w-3" />
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {sortedLatestNovels.novels.map((novel, idx) => (
-                    <NovelCard
-                      key={`latest-${novel._id}-${idx}`}
-                      novel={novel}
-                    />
-                  ))}
-                </div>
+                {sortedLatestNovels.novels.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {sortedLatestNovels.novels.map((novel, idx) => (
+                      <NovelCard
+                        key={`latest-${novel._id}-${idx}`}
+                        novel={novel}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-6 bg-card rounded-lg border shadow-sm p-8">
+                    <BoxIcon className="size-20 text-muted-foreground" />
+                    <h3 className="text-2xl font-semibold text-foreground">
+                      No Novels Found
+                    </h3>
+                    <p className="text-muted-foreground max-w-md text-sm">
+                      It looks like we couldn't find any novels. Try again
+                    </p>
+                    <Link
+                      href="/search"
+                      className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                      aria-label="Explore all novels"
+                    >
+                      Explore Novels <FaChevronRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </div>
+                )}
               </section>
             </Suspense>
-
             <Suspense
               fallback={
                 <div className="h-40 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>

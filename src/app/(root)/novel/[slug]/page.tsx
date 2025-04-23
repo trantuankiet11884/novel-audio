@@ -193,7 +193,7 @@ export default async function NovelPage({
 
             <TabsContent value="info">
               <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-                <CardHeader className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+                <CardHeader>
                   <CardTitle>Novel Information</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
